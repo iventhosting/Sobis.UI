@@ -11,6 +11,9 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-34d399?style=for-the-badge" alt="MIT License" /></a>
 </p>
 
+
+<p align="center"><strong>🇬🇧 English</strong> &nbsp;|&nbsp; <a href="README.tr.md"><strong>🇹🇷 Türkçe</strong></a></p>
+
 ---
 
 **Sobis.UI** is a standalone, enterprise-grade **.NET 10 Blazor UI Component Library** crafted by **Sobis Bilgi Teknolojileri Sistemleri** (`www.sobistech.com`). Designed for data-dense business applications, it eliminates raw `<div>` clutter and Bootstrap dependencies with **48 composable, strongly-typed Razor components** powered by pure `--sbs-*` CSS design tokens.
@@ -25,6 +28,9 @@
 | **Turkish-Aware Search** | Built-in `İ/ı/Ş/ş/Ğ/ğ/Ö/ö/Ü/ü/Ç/ç` case-insensitive filtering across `SbsGrid`, `SbsComboBox`, `SbsMultiSelect`, and `SbsTagBox`. |
 | **Enterprise Form Context** | Cascade `Disabled`, `ReadOnly`, `LabelPosition`, `CascadedRequiredFields`, `CascadedEditableFields`, and Blazor `EditContext` seamlessly via `SbsInputBase<T>`. |
 | **Pluggable Auth & i18n** | Clean host abstractions (`ISbsAuthorizationProvider`, `ISbsLocalizer`) with zero domain coupling — works out of the box in both **Blazor Server** and **Blazor WebAssembly**. |
+
+
+<p align="center"><strong>🇬🇧 English</strong> &nbsp;|&nbsp; <a href="README.tr.md"><strong>🇹🇷 Türkçe</strong></a></p>
 
 ---
 
@@ -110,6 +116,9 @@ builder.Services.AddSbsUI(options =>
 </SbsPage>
 ```
 
+
+<p align="center"><strong>🇬🇧 English</strong> &nbsp;|&nbsp; <a href="README.tr.md"><strong>🇹🇷 Türkçe</strong></a></p>
+
 ---
 
 ## 📦 Component Catalog (48 Components)
@@ -122,6 +131,9 @@ builder.Services.AddSbsUI(options =>
 | **Navigation (5)** | `SbsTabs`, `SbsTabPanel`, `SbsAccordion`, `SbsExpansionPanel`, `SbsDrawer` |
 | **Overlays (6)** | `SbsModal`, `SbsConfirmDialog`, `SbsDialogProvider`, `SbsContextMenu`, `SbsContextMenuItem`, `SbsContextMenuDivider` |
 | **Display & Feedback (10)** | `SbsText`, `SbsAlert`, `SbsBadge`, `SbsChip`, `SbsIcon`, `SbsTooltip`, `SbsEmptyState`, `SbsProgress`, `SbsSkeleton`, `SbsLoading`, `SbsToastContainer` |
+
+
+<p align="center"><strong>🇬🇧 English</strong> &nbsp;|&nbsp; <a href="README.tr.md"><strong>🇹🇷 Türkçe</strong></a></p>
 
 ---
 
@@ -142,6 +154,9 @@ Customize brand colors via CSS variables:
     --sbs-accent-2: #e8922d;
 }
 ```
+
+
+<p align="center"><strong>🇬🇧 English</strong> &nbsp;|&nbsp; <a href="README.tr.md"><strong>🇹🇷 Türkçe</strong></a></p>
 
 ---
 
