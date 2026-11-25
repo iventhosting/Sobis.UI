@@ -1,0 +1,114 @@
+@namespace Sobis.UI
+@typeparam TValue
+@inherits SbsInputBase<TValue>
+@using System.Globalization
+
+@if (IsImmediate)
+{
+    <input type="number"
+           class="@InputClass"
+           style="@BuildStyle()"
+           value="@FormattedText"
+           placeholder="@Placeholder"
+           disabled="@EffectiveDisabled"
+           readonly="@EffectiveReadOnly"
+           step="@Step"
+           min="@Min"
+           max="@Max"
+           @oninput="OnValueInputAsync"
+           @attributes="UserAttributes" />
+}
+else
+{
+    <input type="number"
+           class="@InputClass"
+           style="@BuildStyle()"
+           value="@FormattedText"
+           placeholder="@Placeholder"
+           disabled="@EffectiveDisabled"
+           readonly="@EffectiveReadOnly"
+           step="@Step"
+           min="@Min"
+           max="@Max"
+           @onchange="OnValueInputAsync"
+           @attributes="UserAttributes" />
+}
+
+@code {
+    [Parameter] public string Step { get; set; } = "any";
+    [Parameter] public string? Min { get; set; }
+    [Parameter] public string? Max { get; set; }
+    [Parameter] public SbsBindMode? BindMode { get; set; }
+    /// <summary>Legacy string attribute absorbed cleanly so DevExpress-style BindValueMode="..." neither fails Razor compilation nor leaks into HTML.</summary>
+    [Parameter] public string? BindValueMode { get; set; }
+
+    private bool IsImmediate
+    {
+        get
+        {
+            if (BindMode.HasValue)
+                return BindMode.Value == SbsBindMode.OnInput;
+
+            if (!string.IsNullOrWhiteSpace(BindValueMode))
+            {
+                if (BindValueMode.EndsWith("OnChange", StringComparison.OrdinalIgnoreCase)
+                    || BindValueMode.EndsWith("OnLostFocus", StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                if (BindValueMode.EndsWith("OnInput", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return true;
+        }
+    }
+
+    private string InputClass => BuildClass(
+        CreateCssBuilder("sbs-input")
+            .AddClass("sbs-input-invalid", IsInvalid));
+
+    protected override bool HasValue() => Value is not null;
+
+    private string? FormattedText => Value switch
+    {
+        null => null,
+        decimal d => d.ToString(CultureInfo.InvariantCulture),
+        double db => db.ToString(CultureInfo.InvariantCulture),
+        float fl => fl.ToString(CultureInfo.InvariantCulture),
+        _ => Value.ToString()
+    };
+
+    private async Task OnValueInputAsync(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        TValue? result = default;
+
+        if (!string.IsNullOrWhiteSpace(raw))
+        {
+            var t = Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue);
+            try
+            {
+                if (t == typeof(int))
+                    result = (TValue)(object)int.Parse(raw, CultureInfo.InvariantCulture);
+                else if (t == typeof(long))
+                    result = (TValue)(object)long.Parse(raw, CultureInfo.InvariantCulture);
+                else if (t == typeof(short))
+                    result = (TValue)(object)short.Parse(raw, CultureInfo.InvariantCulture);
+                else if (t == typeof(byte))
+                    result = (TValue)(object)byte.Parse(raw, CultureInfo.InvariantCulture);
+                else if (t == typeof(decimal))
+                    result = (TValue)(object)decimal.Parse(raw, CultureInfo.InvariantCulture);
+                else if (t == typeof(double))
+                    result = (TValue)(object)double.Parse(raw, CultureInfo.InvariantCulture);
+                else if (t == typeof(float))
+                    result = (TValue)(object)float.Parse(raw, CultureInfo.InvariantCulture);
+            }
+            catch
+            {
+                result = default;
+            }
+        }
+
+        await NotifyValueChangedAsync(result);
+    }
+}

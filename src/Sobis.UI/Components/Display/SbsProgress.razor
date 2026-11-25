@@ -1,0 +1,137 @@
+@namespace Sobis.UI
+@using System.Globalization
+@inherits SbsComponentBase
+
+@if (Circular)
+{
+    <div class="@RootClass"
+         style="@RootStyle"
+         role="progressbar"
+         aria-valuemin="@MinStr"
+         aria-valuemax="@MaxStr"
+         aria-valuenow="@(Indeterminate ? null : ValueStr)"
+         @attributes="UserAttributes">
+        <svg class="sbs-progress-svg" viewBox="0 0 40 40" width="@CirclePx" height="@CirclePx">
+            <circle class="sbs-progress-ring-track" cx="20" cy="20" r="16" fill="none" stroke-width="@StrokeWidth" />
+            <circle class="sbs-progress-ring-bar"
+                    cx="20" cy="20" r="16"
+                    fill="none"
+                    stroke-width="@StrokeWidth"
+                    stroke-dasharray="@CircleDashArray"
+                    stroke-dashoffset="@CircleDashOffset" />
+        </svg>
+        @if (ShowLabel && !Indeterminate)
+        {
+            <span class="sbs-progress-circle-label">@DisplayLabel</span>
+        }
+    </div>
+}
+else
+{
+    <div class="@RootClass"
+         style="@RootStyle"
+         role="progressbar"
+         aria-valuemin="@MinStr"
+         aria-valuemax="@MaxStr"
+         aria-valuenow="@(Indeterminate ? null : ValueStr)"
+         @attributes="UserAttributes">
+        <div class="sbs-progress-track">
+            <div class="sbs-progress-bar" style="@BarStyle"></div>
+        </div>
+        @if (ShowLabel && !Indeterminate)
+        {
+            <span class="sbs-progress-label">@DisplayLabel</span>
+        }
+    </div>
+}
+
+@code {
+    private const double CircleCircumference = 2 * Math.PI * 16;
+
+    /// <summary>Current progress value.</summary>
+    [Parameter] public double Value { get; set; }
+
+    /// <summary>Maximum progress value. Defaults to 100.</summary>
+    [Parameter] public double Max { get; set; } = 100;
+
+    /// <summary>Minimum progress value. Defaults to 0.</summary>
+    [Parameter] public double Min { get; set; } = 0;
+
+    /// <summary>Shows a continuous indeterminate loading animation.</summary>
+    [Parameter] public bool Indeterminate { get; set; }
+
+    /// <summary>Renders a circular SVG progress ring instead of a horizontal bar.</summary>
+    [Parameter] public bool Circular { get; set; }
+
+    /// <summary>Semantic progress bar color.</summary>
+    [Parameter] public SbsColor Color { get; set; } = SbsColor.Primary;
+
+    /// <summary>Size token controlling bar height or circular diameter.</summary>
+    [Parameter] public SbsSize Size { get; set; } = SbsSize.Md;
+
+    /// <summary>Displays the formatted percentage or custom Label.</summary>
+    [Parameter] public bool ShowLabel { get; set; }
+
+    /// <summary>Optional custom label override when ShowLabel is true.</summary>
+    [Parameter] public string? Label { get; set; }
+
+    /// <summary>Adds diagonal stripes to linear bars.</summary>
+    [Parameter] public bool Striped { get; set; }
+
+    private double Percentage
+    {
+        get
+        {
+            var range = Max - Min;
+            if (range <= 0)
+                return 0;
+            return Math.Clamp((Value - Min) / range * 100.0, 0.0, 100.0);
+        }
+    }
+
+    private string MinStr => Min.ToString("0.##", CultureInfo.InvariantCulture);
+    private string MaxStr => Max.ToString("0.##", CultureInfo.InvariantCulture);
+    private string ValueStr => Value.ToString("0.##", CultureInfo.InvariantCulture);
+
+    private string DisplayLabel => !string.IsNullOrWhiteSpace(Label)
+        ? Label
+        : $"{Math.Round(Percentage):0}%";
+
+    private int CirclePx => Size switch
+    {
+        SbsSize.Xs => 24,
+        SbsSize.Sm => 32,
+        SbsSize.Lg => 56,
+        SbsSize.Xl => 72,
+        _ => 42
+    };
+
+    private string StrokeWidth => Size switch
+    {
+        SbsSize.Xs => "4",
+        SbsSize.Sm => "3.5",
+        SbsSize.Lg => "3.5",
+        SbsSize.Xl => "3",
+        _ => "3.5"
+    };
+
+    private string CircleDashArray => CircleCircumference.ToString("0.##", CultureInfo.InvariantCulture);
+
+    private string CircleDashOffset => Indeterminate
+        ? (CircleCircumference * 0.72).ToString("0.##", CultureInfo.InvariantCulture)
+        : (CircleCircumference * (1.0 - Percentage / 100.0)).ToString("0.##", CultureInfo.InvariantCulture);
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-progress")
+            .AddClass(Circular ? "sbs-progress-circular" : "sbs-progress-linear")
+            .AddClass($"sbs-progress-{Color.ToCss()}")
+            .AddClass($"sbs-progress-{Size.ToCss()}")
+            .AddClass("sbs-progress-indeterminate", Indeterminate)
+            .AddClass("sbs-progress-striped", Striped && !Circular));
+
+    private string? RootStyle => BuildStyle();
+
+    private string? BarStyle => Indeterminate
+        ? null
+        : $"width:{Percentage.ToString("0.##", CultureInfo.InvariantCulture)}%;";
+}

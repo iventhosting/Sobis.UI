@@ -1,0 +1,86 @@
+.sbs-badge {
+    --sbs-b-fg: var(--sbs-text);
+    --sbs-b-bg: var(--sbs-card-2);
+    --sbs-b-contrast: var(--sbs-text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    border-radius: var(--sbs-radius-xs);
+    border: 1px solid transparent;
+    vertical-align: middle;
+}
+
+.sbs-badge-pill {
+    border-radius: var(--sbs-radius-pill);
+}
+
+/* Sizes */
+.sbs-badge-xs { font-size: 10px; padding: 2px 6px; min-height: 16px; }
+.sbs-badge-sm { font-size: var(--sbs-fs-xs); padding: 3px 8px; min-height: 20px; }
+.sbs-badge-md { font-size: var(--sbs-fs-sm); padding: 4px 10px; min-height: 24px; }
+.sbs-badge-lg { font-size: var(--sbs-fs-md); padding: 5px 12px; min-height: 28px; }
+.sbs-badge-xl { font-size: var(--sbs-fs-lg); padding: 6px 14px; min-height: 32px; }
+
+/* Color palette */
+.sbs-badge-default   { --sbs-b-fg: var(--sbs-text);       --sbs-b-bg: var(--sbs-card-2);       --sbs-b-contrast: var(--sbs-text); }
+.sbs-badge-primary   { --sbs-b-fg: var(--sbs-accent);     --sbs-b-bg: var(--sbs-accent-soft);  --sbs-b-contrast: var(--sbs-primary-contrast); }
+.sbs-badge-secondary { --sbs-b-fg: var(--sbs-info);       --sbs-b-bg: var(--sbs-info-soft);    --sbs-b-contrast: var(--sbs-info-contrast); }
+.sbs-badge-success   { --sbs-b-fg: var(--sbs-success);    --sbs-b-bg: var(--sbs-success-soft); --sbs-b-contrast: var(--sbs-success-contrast); }
+.sbs-badge-warning   { --sbs-b-fg: var(--sbs-warning);    --sbs-b-bg: var(--sbs-warning-soft); --sbs-b-contrast: var(--sbs-warning-contrast); }
+.sbs-badge-danger    { --sbs-b-fg: var(--sbs-danger);     --sbs-b-bg: var(--sbs-danger-soft);  --sbs-b-contrast: var(--sbs-danger-contrast); }
+.sbs-badge-info      { --sbs-b-fg: var(--sbs-info);       --sbs-b-bg: var(--sbs-info-soft);    --sbs-b-contrast: var(--sbs-info-contrast); }
+.sbs-badge-muted     { --sbs-b-fg: var(--sbs-text-muted); --sbs-b-bg: var(--sbs-surface-hover); --sbs-b-contrast: var(--sbs-text); }
+
+/* Variants */
+.sbs-badge-soft {
+    background: var(--sbs-b-bg);
+    color: var(--sbs-b-fg);
+    border-color: color-mix(in srgb, var(--sbs-b-fg) 24%, transparent);
+}
+
+.sbs-badge-filled {
+    background: var(--sbs-b-fg);
+    color: var(--sbs-b-contrast);
+    border-color: var(--sbs-b-fg);
+}
+
+.sbs-badge-default.sbs-badge-filled {
+    background: var(--sbs-card-2);
+    color: var(--sbs-text);
+    border-color: var(--sbs-border-strong);
+}
+
+.sbs-badge-outlined {
+    background: transparent;
+    color: var(--sbs-b-fg);
+    border-color: color-mix(in srgb, var(--sbs-b-fg) 60%, transparent);
+}
+
+.sbs-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+.sbs-badge-dot-only {
+    padding: 0;
+    min-height: 0;
+    width: 8px;
+    height: 8px;
+    background: var(--sbs-b-fg);
+    border: 0;
+}
+
+.sbs-badge-dot-only .sbs-badge-dot {
+    display: none;
+}
+
+.sbs-badge-icon {
+    font-size: 0.9em;
+}

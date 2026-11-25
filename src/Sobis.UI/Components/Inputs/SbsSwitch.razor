@@ -1,0 +1,110 @@
+@namespace Sobis.UI
+@inherits SbsInputBase<bool>
+
+<label class="@RootClass" style="@BuildStyle()" @attributes="UserAttributes">
+    <button type="button"
+            role="switch"
+            aria-checked="@(CurrentChecked ? "true" : "false")"
+            class="@TrackClass"
+            disabled="@EffectiveDisabled"
+            @onclick="ToggleAsync">
+        <span class="sbs-switch-thumb"></span>
+    </button>
+
+    @if (ChildContent is not null)
+    {
+        <span class="sbs-switch-label">@ChildContent</span>
+    }
+    else if (!string.IsNullOrEmpty(EffectiveLabel))
+    {
+        <span class="sbs-switch-label">@EffectiveLabel</span>
+    }
+
+    @if (IsRequired)
+    {
+        <span class="sbs-switch-required">*</span>
+    }
+</label>
+
+@code {
+    [Parameter] public bool Checked { get; set; }
+    [Parameter] public EventCallback<bool> CheckedChanged { get; set; }
+    [Parameter] public Expression<Func<bool>>? CheckedExpression { get; set; }
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? OnText { get; set; }
+    [Parameter] public string? OffText { get; set; }
+    [Parameter] public string Size { get; set; } = "md";
+    [Parameter] public SbsSize? SwitchSize { get; set; }
+    [Parameter] public SbsColor Color { get; set; } = SbsColor.Primary;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool _boundViaValue;
+
+    private bool CurrentChecked => _boundViaValue ? Value : Checked;
+
+    protected override string? ActualPropertyName
+        => !string.IsNullOrWhiteSpace(PropertyName)
+            ? PropertyName
+            : ExtractPropertyName(CheckedExpression) ?? ExtractPropertyName(ValueExpression);
+
+    protected override bool HasValue() => CurrentChecked;
+
+    private string EffectiveSize => SwitchSize?.ToCss()
+        ?? (string.IsNullOrWhiteSpace(Size) ? "md" : Size.Trim().ToLowerInvariant());
+
+    private string? EffectiveLabel
+        => CurrentChecked
+            ? (!string.IsNullOrEmpty(OnText) ? OnText : Label)
+            : (!string.IsNullOrEmpty(OffText) ? OffText : Label);
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-switch")
+            .AddClass($"sbs-switch-{EffectiveSize}")
+            .AddClass($"sbs-switch-color-{Color.ToCss()}")
+            .AddClass("sbs-switch-checked", CurrentChecked)
+            .AddClass("sbs-switch-disabled", EffectiveDisabled)
+            .AddClass("sbs-switch-invalid", IsInvalid));
+
+    private string TrackClass => CreateCssBuilder("sbs-switch-track")
+        .AddClass("sbs-switch-track-checked", CurrentChecked)
+        .ToString();
+
+    public override Task SetParametersAsync(ParameterView parameters)
+    {
+        var hasChecked = parameters.TryGetValue<bool>(nameof(Checked), out _)
+                         || parameters.TryGetValue<EventCallback<bool>>(nameof(CheckedChanged), out _);
+        var hasValue = parameters.TryGetValue<bool>(nameof(Value), out _)
+                       || parameters.TryGetValue<EventCallback<bool>>(nameof(ValueChanged), out _);
+
+        if (hasValue && !hasChecked)
+            _boundViaValue = true;
+        else if (hasChecked && !hasValue)
+            _boundViaValue = false;
+
+        return base.SetParametersAsync(parameters);
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        if (_boundViaValue)
+            Checked = Value;
+        else
+            Value = Checked;
+    }
+
+    private async Task ToggleAsync()
+    {
+        if (EffectiveDisabled || EffectiveReadOnly)
+            return;
+
+        var next = !CurrentChecked;
+        Checked = next;
+        Value = next;
+
+        if (CheckedChanged.HasDelegate)
+            await CheckedChanged.InvokeAsync(next);
+
+        await NotifyValueChangedAsync(next);
+    }
+}

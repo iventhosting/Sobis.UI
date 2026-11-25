@@ -1,0 +1,59 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+@if (EffectiveCount == 1)
+{
+    <span class="@ItemClass" style="@ItemStyle" aria-hidden="true" @attributes="UserAttributes"></span>
+}
+else
+{
+    <div class="@GroupClass" style="@RootStyle" aria-hidden="true" @attributes="UserAttributes">
+        @for (var i = 0; i < EffectiveCount; i++)
+        {
+            var isLastLine = Variant == SbsSkeletonVariant.Text && i == EffectiveCount - 1 && string.IsNullOrWhiteSpace(Width);
+            <span class="@ItemClass @(isLastLine ? "sbs-skeleton-last" : "")" style="@MultiItemStyle"></span>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>Placeholder shape (Text, Rect, Circle).</summary>
+    [Parameter] public SbsSkeletonVariant Variant { get; set; } = SbsSkeletonVariant.Text;
+
+    /// <summary>Optional CSS width (e.g. "100%", "180px", "40px").</summary>
+    [Parameter] public string? Width { get; set; }
+
+    /// <summary>Optional CSS height (e.g. "14px", "120px", "40px").</summary>
+    [Parameter] public string? Height { get; set; }
+
+    /// <summary>Number of skeleton placeholders to render. Defaults to 1.</summary>
+    [Parameter] public int Count { get; set; } = 1;
+
+    /// <summary>Enables subtle shimmer animation. Defaults to true.</summary>
+    [Parameter] public bool Animated { get; set; } = true;
+
+    private int EffectiveCount => Math.Max(1, Count);
+
+    private string GroupClass => BuildClass("sbs-skeleton-group");
+
+    private string ItemClass => EffectiveCount == 1
+        ? BuildClass(CreateCssBuilder("sbs-skeleton")
+            .AddClass($"sbs-skeleton-{Variant.ToCss()}")
+            .AddClass("sbs-skeleton-animated", Animated))
+        : CssBuilder.Default("sbs-skeleton")
+            .AddClass($"sbs-skeleton-{Variant.ToCss()}")
+            .AddClass("sbs-skeleton-animated", Animated)
+            .ToString();
+
+    private string? RootStyle => BuildStyle();
+
+    private string? MultiItemStyle => StyleBuilder.Empty()
+        .AddStyle("width", Width, !string.IsNullOrWhiteSpace(Width))
+        .AddStyle("height", Height, !string.IsNullOrWhiteSpace(Height))
+        .Build();
+
+    private string? ItemStyle => BuildStyle(
+        CreateStyleBuilder()
+            .AddStyle("width", Width, !string.IsNullOrWhiteSpace(Width))
+            .AddStyle("height", Height, !string.IsNullOrWhiteSpace(Height)));
+}

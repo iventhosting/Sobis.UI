@@ -1,0 +1,412 @@
+@namespace Sobis.UI
+@typeparam TItem
+@typeparam TValue
+@inherits SbsInputBase<TValue>
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject ISbsLocalizer Loc
+
+<div class="@RootClass" style="@BuildStyle()" @ref="_root" @attributes="UserAttributes">
+    <button type="button"
+            class="@TriggerClass"
+            disabled="@EffectiveDisabled"
+            @ref="_trigger"
+            @onkeydown="OnTriggerKeyDownAsync"
+            @onkeydown:preventDefault="_open"
+            @onclick="ToggleAsync">
+        <span class="sbs-combo-text @(HasCurrentValue ? "" : "sbs-combo-placeholder")">
+            @(HasCurrentValue ? SelectedText : DisplayPlaceholder)
+        </span>
+        <i class="fa fa-chevron-down sbs-combo-caret @(_open ? "sbs-combo-caret-open" : "")"></i>
+    </button>
+
+    @if (ShowClear && HasCurrentValue && !EffectiveDisabled && !EffectiveReadOnly)
+    {
+        <button type="button"
+                class="sbs-combo-clear"
+                title="@Loc[SbsLocalizerKeys.Clear]"
+                @onclick:stopPropagation="true"
+                @onclick="OnClearAsync">
+            <i class="fa fa-times"></i>
+        </button>
+    }
+
+    @if (_open)
+    {
+        var visibleCount = Math.Min(_filtered.Count, MaxVisibleItems);
+
+        <div class="sbs-combo-panel" popover="manual" @ref="_panel" id="@_panelId">
+            @if (AllowSearch)
+            {
+                <div class="sbs-combo-search-wrap">
+                    <input @ref="_searchInput"
+                           type="text"
+                           id="@($"{_panelId}-ara")"
+                           class="sbs-input sbs-combo-search-input"
+                           placeholder="@Loc[SbsLocalizerKeys.SearchPlaceholder]"
+                           autocomplete="off"
+                           value="@_searchText"
+                           @oninput="OnSearchInput"
+                           @onkeydown="OnSearchKeyDownAsync"
+                           @onclick:stopPropagation="true" />
+                    @if (!string.IsNullOrEmpty(_searchText))
+                    {
+                        <i class="fa fa-times sbs-combo-search-clear"
+                           @onclick="ClearSearchAsync"
+                           @onclick:stopPropagation="true"></i>
+                    }
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(NullText))
+            {
+                <div class="sbs-combo-option @(IsSelected(null) ? "sbs-combo-option-selected" : "")"
+                     @onclick="() => SelectAsync(default)">
+                    <span class="sbs-combo-option-text">@NullText</span>
+                </div>
+            }
+
+            @for (var index = 0; index < visibleCount; index++)
+            {
+                var item = _filtered[index];
+                var v = ValueGetter(item);
+                var selected = IsSelected(v);
+                var active = index == _activeIndex;
+                <div class="sbs-combo-option @(selected ? "sbs-combo-option-selected" : "") @(active ? "sbs-combo-option-active" : "")"
+                     id="@($"{_panelId}-o{index}")"
+                     @key="index"
+                     @onclick="@(() => SelectAsync(ConvertValue(v)))">
+                    <span class="sbs-combo-option-text">@TextGetter(item)</span>
+                    @if (selected)
+                    {
+                        <i class="fa fa-check sbs-combo-option-check"></i>
+                    }
+                </div>
+            }
+
+            @if (_filtered.Count > visibleCount)
+            {
+                <div class="sbs-combo-empty">@Loc[SbsLocalizerKeys.MoreResults, _filtered.Count - visibleCount]</div>
+            }
+            @if (_filtered.Count == 0 && string.IsNullOrEmpty(NullText))
+            {
+                <div class="sbs-combo-empty">@Loc[SbsLocalizerKeys.NoOptions]</div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public IEnumerable<TItem>? Data { get; set; }
+    [Parameter] public Func<TItem, object?> ValueGetter { get; set; } = item => item;
+    [Parameter] public Func<TItem, string> TextGetter { get; set; } = item => item?.ToString() ?? string.Empty;
+    [Parameter] public string NullText { get; set; } = string.Empty;
+    [Parameter] public bool ShowClear { get; set; } = true;
+    [Parameter] public bool AllowSearch { get; set; }
+    [Parameter] public int MaxVisibleItems { get; set; } = 150;
+
+    private readonly string _panelId = "sbscp" + Guid.NewGuid().ToString("N")[..10];
+    private bool _open;
+    private bool _attached;
+    private bool _focusSearchPending;
+    private bool _arrowGuardPending;
+    private string _searchText = string.Empty;
+    private int _activeIndex = -1;
+
+    private ElementReference _root;
+    private ElementReference _trigger;
+    private ElementReference _panel;
+    private ElementReference _searchInput;
+    private DotNetObjectReference<SbsComboBox<TItem, TValue>>? _selfRef;
+
+    private List<(TItem Item, string Key)> _source = [];
+    private IEnumerable<TItem>? _sourceRef;
+    private List<TItem> _filtered = [];
+
+    private bool HasCurrentValue => HasValue();
+
+    private string DisplayPlaceholder
+    {
+        get
+        {
+            if (Placeholder is not null)
+                return !string.IsNullOrEmpty(Placeholder) ? Placeholder : NullText;
+
+            return !string.IsNullOrEmpty(NullText) ? NullText : "Seçiniz...";
+        }
+    }
+
+    private string RootClass => BuildClass("sbs-combo");
+
+    private string TriggerClass => CreateCssBuilder("sbs-input sbs-combo-trigger")
+        .AddClass("sbs-input-invalid", IsInvalid)
+        .AddClass("sbs-combo-trigger-open", _open)
+        .ToString();
+
+    protected override bool HasValue()
+    {
+        if (Value is null)
+            return false;
+
+        var str = Value.ToString();
+        if (string.IsNullOrEmpty(str))
+            return false;
+
+        if (str == "0")
+        {
+            return Data is not null
+                   && Data.Any(x => string.Equals(ValueGetter(x)?.ToString(), "0", StringComparison.Ordinal));
+        }
+
+        return true;
+    }
+
+    private string SelectedText
+    {
+        get
+        {
+            if (Data is null || Value is null)
+                return string.Empty;
+
+            var match = Data.FirstOrDefault(x =>
+                string.Equals(ValueGetter(x)?.ToString(), Value.ToString(), StringComparison.Ordinal));
+            return match is not null ? TextGetter(match) : Value.ToString() ?? string.Empty;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        if (_open && !ReferenceEquals(_sourceRef, Data))
+        {
+            PrepareSource();
+            FilterItems(preserveActive: true);
+        }
+    }
+
+    private void PrepareSource()
+    {
+        _sourceRef = Data;
+        _source = Data?.Select(x => (x, SbsTextHelper.NormalizeTr(TextGetter(x)))).ToList() ?? [];
+    }
+
+    private void FilterItems(bool preserveActive = false)
+    {
+        var query = AllowSearch && !string.IsNullOrWhiteSpace(_searchText)
+            ? SbsTextHelper.NormalizeTr(_searchText.Trim())
+            : null;
+
+        _filtered = query is null
+            ? _source.Select(x => x.Item).ToList()
+            : _source.Where(x => x.Key.Contains(query, StringComparison.Ordinal)).Select(x => x.Item).ToList();
+
+        var visibleCount = Math.Min(_filtered.Count, MaxVisibleItems);
+        if (preserveActive && _activeIndex >= 0 && _activeIndex < visibleCount)
+            return;
+
+        _activeIndex = visibleCount == 0
+            ? -1
+            : query is not null
+                ? 0
+                : Math.Max(0, _filtered.FindIndex(0, visibleCount, x => IsSelected(ValueGetter(x))));
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        _searchText = e.Value?.ToString() ?? string.Empty;
+        FilterItems();
+    }
+
+    private async Task ClearSearchAsync()
+    {
+        _searchText = string.Empty;
+        FilterItems();
+        try { await _searchInput.FocusAsync(); } catch { }
+    }
+
+    private Task OnSearchKeyDownAsync(KeyboardEventArgs e) => HandleKeyAsync(e.Key);
+
+    private Task OnTriggerKeyDownAsync(KeyboardEventArgs e)
+        => _open ? HandleKeyAsync(e.Key) : Task.CompletedTask;
+
+    private async Task HandleKeyAsync(string key)
+    {
+        var visibleCount = Math.Min(_filtered.Count, MaxVisibleItems);
+        switch (key)
+        {
+            case "ArrowDown":
+                if (visibleCount == 0) return;
+                _activeIndex = _activeIndex < visibleCount - 1 ? _activeIndex + 1 : 0;
+                await ScrollActiveIntoViewAsync();
+                break;
+            case "ArrowUp":
+                if (visibleCount == 0) return;
+                _activeIndex = _activeIndex > 0 ? _activeIndex - 1 : visibleCount - 1;
+                await ScrollActiveIntoViewAsync();
+                break;
+            case "Home" when !AllowSearch:
+                if (visibleCount > 0)
+                {
+                    _activeIndex = 0;
+                    await ScrollActiveIntoViewAsync();
+                }
+                break;
+            case "End" when !AllowSearch:
+                if (visibleCount > 0)
+                {
+                    _activeIndex = visibleCount - 1;
+                    await ScrollActiveIntoViewAsync();
+                }
+                break;
+            case "Enter":
+                if (_activeIndex >= 0 && _activeIndex < visibleCount)
+                    await SelectAsync(ConvertValue(ValueGetter(_filtered[_activeIndex])));
+                break;
+            case "Escape":
+            case "Tab":
+                await CloseAsync(focusTrigger: key == "Escape");
+                break;
+        }
+    }
+
+    private async Task ScrollActiveIntoViewAsync()
+    {
+        try { await JS.InvokeVoidAsync("sbsScrollRowIntoView", $"#{_panelId}-o{_activeIndex}"); } catch { }
+    }
+
+    private async Task CloseAsync(bool focusTrigger)
+    {
+        if (!_open)
+            return;
+
+        _open = false;
+        _attached = false;
+        try { await JS.InvokeVoidAsync("sbsComboOutsideClick.detach", _root); } catch { }
+        if (focusTrigger)
+        {
+            try { await _trigger.FocusAsync(); } catch { }
+        }
+
+        StateHasChanged();
+    }
+
+    private bool IsSelected(object? v)
+    {
+        var current = Value?.ToString() ?? string.Empty;
+        var candidate = v?.ToString() ?? string.Empty;
+        return string.Equals(current, candidate, StringComparison.Ordinal);
+    }
+
+    private async Task ToggleAsync()
+    {
+        if (EffectiveDisabled || EffectiveReadOnly)
+            return;
+
+        _open = !_open;
+        if (_open)
+        {
+            _searchText = string.Empty;
+            _activeIndex = -1;
+            PrepareSource();
+            FilterItems();
+            if (AllowSearch)
+            {
+                _focusSearchPending = true;
+                _arrowGuardPending = true;
+            }
+
+            StateHasChanged();
+        }
+        else
+        {
+            _attached = false;
+            try { await JS.InvokeVoidAsync("sbsComboOutsideClick.detach", _root); } catch { }
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_open && _panel.Id is not null)
+        {
+            if (!_attached)
+            {
+                _attached = true;
+                await RegisterOutsideClickAsync();
+            }
+
+            if (_focusSearchPending && _searchInput.Id is not null)
+            {
+                _focusSearchPending = false;
+                try { await _searchInput.FocusAsync(); } catch { }
+            }
+
+            if (_arrowGuardPending)
+            {
+                _arrowGuardPending = false;
+                try { await JS.InvokeVoidAsync("sbsOkTuslariImlecKoru", $"{_panelId}-ara"); } catch { }
+            }
+        }
+    }
+
+    private async Task SelectAsync(TValue? v)
+    {
+        _open = false;
+        _attached = false;
+        try { await JS.InvokeVoidAsync("sbsComboOutsideClick.detach", _root); } catch { }
+        try { await _trigger.FocusAsync(); } catch { }
+        await NotifyValueChangedAsync(v);
+        StateHasChanged();
+    }
+
+    private async Task OnClearAsync()
+    {
+        if (EffectiveDisabled || EffectiveReadOnly)
+            return;
+
+        await NotifyValueChangedAsync(default);
+    }
+
+    private static TValue? ConvertValue(object? raw)
+    {
+        if (raw is null)
+            return default;
+        if (raw is TValue typed)
+            return typed;
+
+        try
+        {
+            var t = typeof(TValue);
+            var underlying = Nullable.GetUnderlyingType(t) ?? t;
+            return (TValue?)Convert.ChangeType(raw, underlying);
+        }
+        catch
+        {
+            return default;
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnOutsideClick()
+    {
+        if (_open)
+            await CloseAsync(focusTrigger: false);
+    }
+
+    private async Task RegisterOutsideClickAsync()
+    {
+        try
+        {
+            _selfRef ??= DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("sbsComboOutsideClick.attach", _root, _selfRef, _panel);
+        }
+        catch { }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Dispose();
+        try { await JS.InvokeVoidAsync("sbsComboOutsideClick.detach", _root); } catch { }
+        _selfRef?.Dispose();
+    }
+}

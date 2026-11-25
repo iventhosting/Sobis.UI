@@ -1,0 +1,104 @@
+@inject IJSRuntime JS
+
+<section class="demo-section-host">
+    <SbsCard Title="@Title" Subtitle="@Subtitle" Icon="@Icon">
+        <HeaderActions>
+            @if (HeaderActions is not null)
+            {
+                @HeaderActions
+            }
+        </HeaderActions>
+        <ChildContent>
+            <SbsTabs Variant="SbsTabsVariant.Line" Dense="true">
+                @if (DemoContent is not null)
+                {
+                    <SbsTabPanel Title="Canlı Demo" Icon="fa fa-play">
+                        <SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Sm" Padding="SbsSpacing.Sm">
+                            @DemoContent
+                        </SbsStack>
+                    </SbsTabPanel>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(RazorCode))
+                {
+                    <SbsTabPanel Title="@PrimaryCodeTab" Icon="fa fa-code">
+                        <SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Xs" Padding="SbsSpacing.Xs">
+                            <SbsStack Direction="SbsDirection.Row" Justify="SbsJustify.End">
+                                <SbsButton Text="@(_copiedPrimary ? "Kopyalandı" : "Kopyala")"
+                                           Icon="@(_copiedPrimary ? "fa fa-check" : "fa fa-copy")"
+                                           Variant="@(_copiedPrimary ? "save" : "ghost")"
+                                           Size="sm"
+                                           OnClick="@(() => CopyAsync(RazorCode, true))" />
+                            </SbsStack>
+                            <pre class="demo-code-pre"><code>@RazorCode</code></pre>
+                        </SbsStack>
+                    </SbsTabPanel>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(CSharpCode))
+                {
+                    <SbsTabPanel Title="@SecondaryCodeTab" Icon="fa fa-file-code">
+                        <SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Xs" Padding="SbsSpacing.Xs">
+                            <SbsStack Direction="SbsDirection.Row" Justify="SbsJustify.End">
+                                <SbsButton Text="@(_copiedSecondary ? "Kopyalandı" : "Kopyala")"
+                                           Icon="@(_copiedSecondary ? "fa fa-check" : "fa fa-copy")"
+                                           Variant="@(_copiedSecondary ? "save" : "ghost")"
+                                           Size="sm"
+                                           OnClick="@(() => CopyAsync(CSharpCode!, false))" />
+                            </SbsStack>
+                            <pre class="demo-code-pre"><code>@CSharpCode</code></pre>
+                        </SbsStack>
+                    </SbsTabPanel>
+                }
+
+                @if (ApiParams is { Count: > 0 })
+                {
+                    <SbsTabPanel Title="API Parametreleri" Icon="fa fa-book" Badge="@ApiParams.Count.ToString()" BadgeColor="SbsColor.Info">
+                        <SbsGrid TItem="ApiParamRow" Data="ApiParams" FillHeight="false" PageSize="20" ShowToolbar="false">
+                            <SbsGridColumn TItem="ApiParamRow" Field="@nameof(ApiParamRow.Name)" Caption="Parametre" Width="170px">
+                                <Template Context="p"><SbsText Monospace="true" Bold="true" Color="SbsColor.Primary">@p.Name</SbsText></Template>
+                            </SbsGridColumn>
+                            <SbsGridColumn TItem="ApiParamRow" Field="@nameof(ApiParamRow.Type)" Caption="Tür" Width="180px">
+                                <Template Context="p"><SbsText Monospace="true" Variant="SbsTextVariant.Caption">@p.Type</SbsText></Template>
+                            </SbsGridColumn>
+                            <SbsGridColumn TItem="ApiParamRow" Field="@nameof(ApiParamRow.Default)" Caption="Varsayılan" Width="130px">
+                                <Template Context="p"><SbsBadge Text="@p.Default" Color="SbsColor.Muted" Variant="SbsVariant.Soft" Size="SbsSize.Xs" /></Template>
+                            </SbsGridColumn>
+                            <SbsGridColumn TItem="ApiParamRow" Field="@nameof(ApiParamRow.Description)" Caption="Açıklama" />
+                        </SbsGrid>
+                    </SbsTabPanel>
+                }
+            </SbsTabs>
+        </ChildContent>
+    </SbsCard>
+</section>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string Icon { get; set; } = "fa fa-cube";
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
+    [Parameter] public RenderFragment? DemoContent { get; set; }
+    [Parameter] public string? RazorCode { get; set; }
+    [Parameter] public string? CSharpCode { get; set; }
+    [Parameter] public string PrimaryCodeTab { get; set; } = "Kodu Gör (Razor)";
+    [Parameter] public string SecondaryCodeTab { get; set; } = "Kodu Gör (C#)";
+    [Parameter] public IReadOnlyList<ApiParamRow>? ApiParams { get; set; }
+
+    private bool _copiedPrimary;
+    private bool _copiedSecondary;
+
+    private async Task CopyAsync(string text, bool primary)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+            if (primary) _copiedPrimary = true; else _copiedSecondary = true;
+            StateHasChanged();
+            await Task.Delay(1800);
+            if (primary) _copiedPrimary = false; else _copiedSecondary = false;
+            StateHasChanged();
+        }
+        catch { }
+    }
+}

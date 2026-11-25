@@ -1,0 +1,23 @@
+.sbs-stack {
+    display: flex;
+    flex-direction: row;
+    min-width: 0;
+}
+
+.sbs-stack-inline {
+    display: inline-flex;
+}
+
+.sbs-stack-wrap {
+    flex-wrap: wrap;
+}
+
+.sbs-stack-full {
+    width: 100%;
+}
+
+.sbs-stack-grow {
+    flex: 1 1 auto;
+    min-height: 0;
+    min-width: 0;
+}

@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Sobis.UI</RootNamespace>
+    <AssemblyName>Sobis.UI</AssemblyName>
+    <StaticWebAssetBasePath>_content/Sobis.UI</StaticWebAssetBasePath>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>Sobis.UI</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Sobis Bilgi Teknolojileri Sistemleri</Authors>
+    <Company>Sobis Bilgi Teknolojileri Sistemleri</Company>
+    <Product>Sobis.UI</Product>
+    <Copyright>Copyright (c) 2026 Sobis Bilgi Teknolojileri Sistemleri</Copyright>
+    <Description>Standalone .NET 10 Blazor UI Component Library with 48 enterprise components: Zero-Div Layout, Form Context, Turkish-Aware Searchable Inputs, Dual-Mode DataGrid, Navigation, Overlays, and Dark/Light CSS Tokens — zero Bootstrap dependency.</Description>
+    <PackageProjectUrl>https://www.sobistech.com</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/iventhosting/Sobis.UI</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageTags>blazor;blazor-components;ui;razor;net10;datagrid;forms;layout;zero-div;dark-theme;sobis</PackageTags>
+    <PackageReleaseNotes>Initial v1.0.0 release with 48 components, zero Bootstrap dependency, Dark/Light themes, Turkish-aware search, and full Blazor Server &amp; WebAssembly support.</PackageReleaseNotes>
+    <IsPackable>true</IsPackable>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\assets\icon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.8" />
+  </ItemGroup>
+
+</Project>

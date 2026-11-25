@@ -1,0 +1,5 @@
+.sbs-ctx-divider {
+    height: 1px;
+    background: var(--sbs-divider);
+    margin: var(--sbs-space-xs) 0;
+}

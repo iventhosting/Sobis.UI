@@ -1,0 +1,30 @@
+.sbs-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.sbs-icon-xs { font-size: 10px; }
+.sbs-icon-sm { font-size: 12px; }
+.sbs-icon-md { font-size: 14px; }
+.sbs-icon-lg { font-size: 18px; }
+.sbs-icon-xl { font-size: 24px; }
+
+.sbs-icon-primary   { color: var(--sbs-accent); }
+.sbs-icon-secondary { color: var(--sbs-info); }
+.sbs-icon-success   { color: var(--sbs-success); }
+.sbs-icon-warning   { color: var(--sbs-warning); }
+.sbs-icon-danger    { color: var(--sbs-danger); }
+.sbs-icon-info      { color: var(--sbs-info); }
+.sbs-icon-muted     { color: var(--sbs-text-muted); }
+
+.sbs-icon-spin {
+    animation: sbsIconSpin 1s linear infinite;
+}
+
+@keyframes sbsIconSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}

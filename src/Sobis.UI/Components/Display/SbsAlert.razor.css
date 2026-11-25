@@ -1,0 +1,88 @@
+.sbs-alert {
+    --sbs-alert-color: var(--sbs-info);
+    --sbs-alert-bg: var(--sbs-info-soft);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--sbs-radius);
+    background: var(--sbs-alert-bg);
+    border: 1px solid color-mix(in srgb, var(--sbs-alert-color) 32%, transparent);
+    border-left: 3px solid var(--sbs-alert-color);
+    color: var(--sbs-text);
+    font-size: var(--sbs-fs-sm);
+    line-height: var(--sbs-lh-normal);
+}
+
+.sbs-alert-info    { --sbs-alert-color: var(--sbs-info);    --sbs-alert-bg: var(--sbs-info-soft); }
+.sbs-alert-success { --sbs-alert-color: var(--sbs-success); --sbs-alert-bg: var(--sbs-success-soft); }
+.sbs-alert-warning { --sbs-alert-color: var(--sbs-warning); --sbs-alert-bg: var(--sbs-warning-soft); }
+.sbs-alert-danger  { --sbs-alert-color: var(--sbs-danger);  --sbs-alert-bg: var(--sbs-danger-soft); }
+
+.sbs-alert-outlined {
+    background: transparent;
+    border-color: color-mix(in srgb, var(--sbs-alert-color) 55%, transparent);
+}
+
+.sbs-alert-dense {
+    padding: 6px 10px;
+    gap: 8px;
+    font-size: var(--sbs-fs-xs);
+}
+
+.sbs-alert-icon {
+    color: var(--sbs-alert-color);
+    font-size: 14px;
+    line-height: 1.3;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.sbs-alert-dense .sbs-alert-icon {
+    font-size: 12px;
+}
+
+.sbs-alert-content {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sbs-alert-title {
+    font-weight: 700;
+    color: var(--sbs-alert-color);
+    margin-bottom: 2px;
+}
+
+.sbs-alert-body {
+    color: var(--sbs-text);
+    word-break: break-word;
+}
+
+.sbs-alert-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+.sbs-alert-close {
+    background: transparent;
+    border: 0;
+    color: var(--sbs-text-muted);
+    cursor: pointer;
+    width: 22px;
+    height: 22px;
+    border-radius: var(--sbs-radius-xs);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 11px;
+    transition: background var(--sbs-transition-fast), color var(--sbs-transition-fast);
+}
+
+.sbs-alert-close:hover {
+    background: var(--sbs-surface-hover);
+    color: var(--sbs-text);
+}

@@ -1,0 +1,36 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<span class="@RootClass" style="@RootStyle" @attributes="UserAttributes">
+    @ChildContent
+    @if (!Disabled && !string.IsNullOrWhiteSpace(Text))
+    {
+        <span class="@BubbleClass" role="tooltip">@Text</span>
+    }
+</span>
+
+@code {
+    /// <summary>Tooltip text displayed on hover or keyboard focus.</summary>
+    [Parameter] public string? Text { get; set; }
+
+    /// <summary>Tooltip position relative to wrapped content (Top, Bottom, Left, Right).</summary>
+    [Parameter] public SbsPlacement Placement { get; set; } = SbsPlacement.Top;
+
+    /// <summary>Disables tooltip display.</summary>
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>Allows long tooltip text to wrap across multiple lines.</summary>
+    [Parameter] public bool Multiline { get; set; }
+
+    /// <summary>Target element wrapped by the tooltip.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string RootClass => BuildClass("sbs-tooltip-host");
+
+    private string? RootStyle => BuildStyle();
+
+    private string BubbleClass => CssBuilder.Default("sbs-tooltip-bubble")
+        .AddClass($"sbs-tooltip-{Placement.ToCss()}")
+        .AddClass("sbs-tooltip-multiline", Multiline)
+        .ToString();
+}

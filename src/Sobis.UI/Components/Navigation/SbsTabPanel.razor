@@ -1,0 +1,106 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@implements IDisposable
+
+@if (IsActive || (ParentTabs?.KeepAlive ?? false))
+{
+    <div class="@RootClass"
+         style="@RootStyle"
+         role="tabpanel"
+         hidden="@(!IsActive)"
+         @attributes="UserAttributes">
+        @ChildContent
+    </div>
+}
+
+@code {
+    /// <summary>Tab header title.</summary>
+    [Parameter] public string Title { get; set; } = "";
+
+    /// <summary>Optional stable key for ActiveKey binding on parent SbsTabs.</summary>
+    [Parameter] public string? Key { get; set; }
+
+    /// <summary>Optional leading icon CSS class in the tab button.</summary>
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>Optional badge text shown next to the tab title.</summary>
+    [Parameter] public string? Badge { get; set; }
+
+    /// <summary>Color of the optional tab badge.</summary>
+    [Parameter] public SbsColor BadgeColor { get; set; } = SbsColor.Primary;
+
+    /// <summary>Prevents selecting this tab.</summary>
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>Shows a close button on the tab header.</summary>
+    [Parameter] public bool Closable { get; set; }
+
+    /// <summary>Callback invoked when this tab's close button is clicked.</summary>
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    /// <summary>Optional custom tab header template replacing Icon + Title.</summary>
+    [Parameter] public RenderFragment? TitleTemplate { get; set; }
+
+    /// <summary>Tab panel content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [CascadingParameter] private SbsTabs? ParentTabs { get; set; }
+
+    private bool IsActive => ParentTabs?.IsPanelActive(this) ?? true;
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-tab-panel")
+            .AddClass("sbs-tab-panel-hidden", !IsActive));
+
+    private string? RootStyle => BuildStyle();
+
+    private string? _lastTitle;
+    private string? _lastKey;
+    private string? _lastIcon;
+    private string? _lastBadge;
+    private SbsColor _lastBadgeColor;
+    private bool _lastDisabled;
+    private bool _lastClosable;
+    private bool _initialized;
+
+    protected override void OnInitialized()
+    {
+        SnapshotHeaderState();
+        _initialized = true;
+        ParentTabs?.RegisterPanel(this);
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (!_initialized)
+            return;
+
+        if (_lastTitle != Title ||
+            _lastKey != Key ||
+            _lastIcon != Icon ||
+            _lastBadge != Badge ||
+            _lastBadgeColor != BadgeColor ||
+            _lastDisabled != Disabled ||
+            _lastClosable != Closable)
+        {
+            SnapshotHeaderState();
+            ParentTabs?.NotifyPanelChanged();
+        }
+    }
+
+    private void SnapshotHeaderState()
+    {
+        _lastTitle = Title;
+        _lastKey = Key;
+        _lastIcon = Icon;
+        _lastBadge = Badge;
+        _lastBadgeColor = BadgeColor;
+        _lastDisabled = Disabled;
+        _lastClosable = Closable;
+    }
+
+    public void Dispose()
+    {
+        ParentTabs?.UnregisterPanel(this);
+    }
+}

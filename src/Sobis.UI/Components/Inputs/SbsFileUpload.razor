@@ -1,0 +1,195 @@
+@namespace Sobis.UI
+@inherits SbsInputBase<IReadOnlyList<IBrowserFile>>
+@inject ISbsLocalizer Loc
+
+<div class="@RootClass" style="@BuildStyle()" @attributes="UserAttributes">
+    <div class="@DropZoneClass"
+         @ondragenter="OnDragEnter"
+         @ondragleave="OnDragLeave"
+         @ondragover:preventDefault="true">
+        <InputFile class="sbs-upload-input"
+                   OnChange="HandleInputFileChangeAsync"
+                   multiple="@Multiple"
+                   accept="@Accept"
+                   disabled="@(EffectiveDisabled || EffectiveReadOnly)" />
+
+        @if (ChildContent is not null)
+        {
+            @ChildContent
+        }
+        else
+        {
+            <div class="sbs-upload-content">
+                <i class="fa fa-cloud-arrow-up sbs-upload-icon"></i>
+                <div class="sbs-upload-text">
+                    <span class="sbs-upload-primary">@EffectiveDropText</span>
+                    @if (!string.IsNullOrEmpty(HelpText))
+                    {
+                        <span class="sbs-upload-hint">@HelpText</span>
+                    }
+                </div>
+                <span class="sbs-upload-browse">@EffectiveButtonText</span>
+            </div>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(_validationError))
+    {
+        <div class="sbs-upload-error">
+            <i class="fa fa-circle-exclamation"></i>
+            <span>@_validationError</span>
+        </div>
+    }
+
+    @if (ShowFileList && _files.Count > 0)
+    {
+        <div class="sbs-upload-list">
+            @foreach (var file in _files)
+            {
+                var currentFile = file;
+                <div class="sbs-upload-item">
+                    <i class="fa fa-file sbs-upload-item-icon"></i>
+                    <span class="sbs-upload-item-name" title="@currentFile.Name">@currentFile.Name</span>
+                    <span class="sbs-upload-item-size">@FormatSize(currentFile.Size)</span>
+                    @if (!EffectiveDisabled && !EffectiveReadOnly)
+                    {
+                        <button type="button"
+                                class="sbs-upload-item-remove"
+                                title="@Loc[SbsLocalizerKeys.RemoveFile]"
+                                @onclick="@(() => RemoveFileAsync(currentFile))">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Multiple { get; set; }
+    [Parameter] public string? Accept { get; set; }
+    [Parameter] public long MaxFileSize { get; set; } = 10 * 1024 * 1024;
+    [Parameter] public int MaxFiles { get; set; } = 10;
+    [Parameter] public bool DragDrop { get; set; } = true;
+    [Parameter] public bool ShowFileList { get; set; } = true;
+    [Parameter] public string? DropText { get; set; }
+    [Parameter] public string? ButtonText { get; set; }
+    [Parameter] public EventCallback<IReadOnlyList<IBrowserFile>> OnFilesSelected { get; set; }
+    [Parameter] public EventCallback<IBrowserFile> OnFileRemoved { get; set; }
+    [Parameter] public EventCallback<string> OnError { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private readonly List<IBrowserFile> _files = [];
+    private bool _isDragging;
+    private string? _validationError;
+
+    private string EffectiveDropText => string.IsNullOrEmpty(DropText)
+        ? Loc[SbsLocalizerKeys.DropFilesHere]
+        : DropText;
+
+    private string EffectiveButtonText => string.IsNullOrEmpty(ButtonText)
+        ? Loc[SbsLocalizerKeys.SelectFiles]
+        : ButtonText;
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-upload")
+            .AddClass("sbs-upload-disabled", EffectiveDisabled));
+
+    private string DropZoneClass => CreateCssBuilder("sbs-upload-dropzone")
+        .AddClass("sbs-upload-compact", !DragDrop)
+        .AddClass("sbs-upload-dragging", _isDragging)
+        .AddClass("sbs-upload-invalid", IsInvalid || !string.IsNullOrEmpty(_validationError))
+        .ToString();
+
+    protected override bool HasValue() => _files.Count > 0;
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        if (Value is not null && !ReferenceEquals(Value, _files))
+        {
+            _files.Clear();
+            _files.AddRange(Value);
+        }
+    }
+
+    private void OnDragEnter()
+    {
+        if (!EffectiveDisabled && !EffectiveReadOnly && DragDrop)
+            _isDragging = true;
+    }
+
+    private void OnDragLeave() => _isDragging = false;
+
+    private async Task HandleInputFileChangeAsync(InputFileChangeEventArgs e)
+    {
+        _isDragging = false;
+        _validationError = null;
+
+        if (EffectiveDisabled || EffectiveReadOnly)
+            return;
+
+        var incoming = Multiple ? e.GetMultipleFiles(Math.Max(1, MaxFiles)) : [e.File];
+        var accepted = new List<IBrowserFile>(incoming.Count);
+
+        foreach (var file in incoming)
+        {
+            if (MaxFileSize > 0 && file.Size > MaxFileSize)
+            {
+                _validationError = $"{file.Name} ({FormatSize(file.Size)} > {FormatSize(MaxFileSize)})";
+                if (OnError.HasDelegate)
+                    await OnError.InvokeAsync(_validationError);
+                continue;
+            }
+
+            accepted.Add(file);
+        }
+
+        if (!Multiple)
+            _files.Clear();
+
+        foreach (var file in accepted)
+        {
+            if (_files.Count >= MaxFiles && Multiple)
+                break;
+
+            _files.Add(file);
+        }
+
+        var snapshot = _files.ToList();
+        await NotifyValueChangedAsync(snapshot);
+
+        if (OnFilesSelected.HasDelegate)
+            await OnFilesSelected.InvokeAsync(snapshot);
+    }
+
+    private async Task RemoveFileAsync(IBrowserFile file)
+    {
+        if (EffectiveDisabled || EffectiveReadOnly)
+            return;
+
+        if (_files.Remove(file))
+        {
+            var snapshot = _files.ToList();
+            await NotifyValueChangedAsync(snapshot);
+
+            if (OnFileRemoved.HasDelegate)
+                await OnFileRemoved.InvokeAsync(file);
+        }
+    }
+
+    private static string FormatSize(long bytes)
+    {
+        string[] units = ["B", "KB", "MB", "GB"];
+        double value = bytes;
+        var unitIndex = 0;
+        while (value >= 1024 && unitIndex < units.Length - 1)
+        {
+            value /= 1024;
+            unitIndex++;
+        }
+
+        return unitIndex == 0 ? $"{bytes} B" : $"{value:0.#} {units[unitIndex]}";
+    }
+}

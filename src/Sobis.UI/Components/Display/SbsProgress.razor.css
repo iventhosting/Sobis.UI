@@ -1,0 +1,115 @@
+.sbs-progress {
+    --sbs-p-color: var(--sbs-accent);
+}
+
+.sbs-progress-default   { --sbs-p-color: var(--sbs-text-muted); }
+.sbs-progress-primary   { --sbs-p-color: var(--sbs-accent); }
+.sbs-progress-secondary { --sbs-p-color: var(--sbs-info); }
+.sbs-progress-success   { --sbs-p-color: var(--sbs-success); }
+.sbs-progress-warning   { --sbs-p-color: var(--sbs-warning); }
+.sbs-progress-danger    { --sbs-p-color: var(--sbs-danger); }
+.sbs-progress-info      { --sbs-p-color: var(--sbs-info); }
+.sbs-progress-muted     { --sbs-p-color: var(--sbs-text-muted); }
+
+/* Linear */
+.sbs-progress-linear {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.sbs-progress-track {
+    position: relative;
+    flex: 1 1 auto;
+    background: var(--sbs-card-2);
+    border: 1px solid var(--sbs-border);
+    border-radius: var(--sbs-radius-pill);
+    overflow: hidden;
+    height: 7px;
+}
+
+.sbs-progress-linear.sbs-progress-xs .sbs-progress-track { height: 4px; }
+.sbs-progress-linear.sbs-progress-sm .sbs-progress-track { height: 5px; }
+.sbs-progress-linear.sbs-progress-md .sbs-progress-track { height: 7px; }
+.sbs-progress-linear.sbs-progress-lg .sbs-progress-track { height: 10px; }
+.sbs-progress-linear.sbs-progress-xl .sbs-progress-track { height: 14px; }
+
+.sbs-progress-bar {
+    height: 100%;
+    background: var(--sbs-p-color);
+    border-radius: var(--sbs-radius-pill);
+    transition: width 0.25s ease;
+}
+
+.sbs-progress-striped .sbs-progress-bar {
+    background-image: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.16) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.16) 50%,
+        rgba(255, 255, 255, 0.16) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 16px 16px;
+}
+
+.sbs-progress-linear.sbs-progress-indeterminate .sbs-progress-bar {
+    position: absolute;
+    width: 38%;
+    animation: sbsProgressSlide 1.25s infinite ease-in-out;
+}
+
+@keyframes sbsProgressSlide {
+    0%   { left: -40%; }
+    100% { left: 105%; }
+}
+
+.sbs-progress-label {
+    font-size: var(--sbs-fs-xs);
+    font-weight: 600;
+    color: var(--sbs-text-muted);
+    min-width: 34px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* Circular */
+.sbs-progress-circular {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sbs-progress-svg {
+    transform: rotate(-90deg);
+}
+
+.sbs-progress-ring-track {
+    stroke: var(--sbs-card-2);
+}
+
+.sbs-progress-ring-bar {
+    stroke: var(--sbs-p-color);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.25s ease;
+}
+
+.sbs-progress-circular.sbs-progress-indeterminate .sbs-progress-svg {
+    animation: sbsProgressSpin 1s linear infinite;
+}
+
+@keyframes sbsProgressSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+.sbs-progress-circle-label {
+    position: absolute;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--sbs-text);
+}

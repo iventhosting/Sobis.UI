@@ -1,0 +1,79 @@
+@page "/navigation"
+
+<PageTitle>Sobis.UI — Navigasyon</PageTitle>
+
+<SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Md">
+    <DemoSection Title="SbsTabs (Line / Pill / Card)"
+                 Subtitle="İkon, rozet ve kapatılabilir sekme destekli sekme bileşeni"
+                 Icon="fa fa-folder-tree"
+                 RazorCode="@TabsRazor">
+        <HeaderActions>
+            <SbsRadioGroup TValue="SbsTabsVariant" Data="_variants" @bind-Value="_variant" />
+        </HeaderActions>
+        <DemoContent>
+            <SbsTabs Variant="_variant">
+                <SbsTabPanel Title="Genel" Icon="fa fa-home">
+                    <SbsText Variant="SbsTextVariant.Muted">Genel sekme içeriği.</SbsText>
+                </SbsTabPanel>
+                <SbsTabPanel Title="Bildirimler" Icon="fa fa-bell" Badge="4" BadgeColor="SbsColor.Primary">
+                    <SbsAlert Severity="SbsAlertSeverity.Info" Text="4 yeni bildiriminiz var." Dense="true" />
+                </SbsTabPanel>
+                <SbsTabPanel Title="Ayarlar" Icon="fa fa-gear">
+                    <SbsSwitch @bind-Checked="_multi" Label="Akordeonda Çoklu Açılış" />
+                </SbsTabPanel>
+            </SbsTabs>
+        </DemoContent>
+    </DemoSection>
+
+    <DemoSection Title="SbsAccordion & SbsDrawer"
+                 Subtitle="Daraltılabilir akordeon panelleri ve yandan açılan çekmece"
+                 Icon="fa fa-bars"
+                 RazorCode="@AccordionRazor">
+        <HeaderActions>
+            <SbsButton Text="SbsDrawer Aç" Icon="fa fa-bars-staggered" Variant="primary" Size="sm" OnClick="@(() => _drawerOpen = true)" />
+        </HeaderActions>
+        <DemoContent>
+            <SbsAccordion MultiExpansion="_multi">
+                <SbsExpansionPanel Title="Bağımsız RCL Mimarisi" Subtitle="NuGet & GitHub hazır" Icon="fa fa-cube" Expanded="true">
+                    <SbsText Variant="SbsTextVariant.Muted">Sobis.UI hiçbir uygulama projesine bağımlı değildir.</SbsText>
+                </SbsExpansionPanel>
+                <SbsExpansionPanel Title="Sıfır Bootstrap" Subtitle="Saf --sbs-* token sistemi" Icon="fa fa-paintbrush">
+                    <SbsText Variant="SbsTextVariant.Muted">Koyu ve Açık tema tek CSS dosyasından yönetilir.</SbsText>
+                </SbsExpansionPanel>
+            </SbsAccordion>
+        </DemoContent>
+    </DemoSection>
+</SbsStack>
+
+<SbsDrawer @bind-Open="_drawerOpen" Anchor="SbsPlacement.Right" Title="Yan Çekmece (SbsDrawer)" Icon="fa fa-bars-staggered">
+    <ChildContent>
+        <SbsText Variant="SbsTextVariant.Body">Escape tuşu veya arka plana tıklayarak kapatabilirsiniz.</SbsText>
+    </ChildContent>
+    <FooterContent>
+        <SbsButton Text="Kapat" Variant="ghost" OnClick="@(() => _drawerOpen = false)" />
+    </FooterContent>
+</SbsDrawer>
+
+@code {
+    private SbsTabsVariant _variant = SbsTabsVariant.Line;
+    private readonly List<SbsTabsVariant> _variants = [SbsTabsVariant.Line, SbsTabsVariant.Pill, SbsTabsVariant.Card];
+    private bool _multi;
+    private bool _drawerOpen;
+
+    private const string TabsRazor = """
+        <SbsTabs Variant="SbsTabsVariant.Line">
+            <SbsTabPanel Title="Genel" Icon="fa fa-home">İçerik</SbsTabPanel>
+            <SbsTabPanel Title="Bildirimler" Icon="fa fa-bell" Badge="4" BadgeColor="SbsColor.Primary">...</SbsTabPanel>
+        </SbsTabs>
+        """;
+
+    private const string AccordionRazor = """
+        <SbsAccordion MultiExpansion="false">
+            <SbsExpansionPanel Title="Bağımsız RCL" Icon="fa fa-cube" Expanded="true">...</SbsExpansionPanel>
+        </SbsAccordion>
+
+        <SbsDrawer @bind-Open="_drawerOpen" Anchor="SbsPlacement.Right" Title="Yan Çekmece">
+            <ChildContent>Detay içeriği</ChildContent>
+        </SbsDrawer>
+        """;
+}

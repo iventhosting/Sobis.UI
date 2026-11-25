@@ -1,0 +1,112 @@
+@page "/grid"
+@inject ISbsToastService Toast
+
+<PageTitle>Sobis.UI — DataGrid (SbsGrid)</PageTitle>
+
+<SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Md">
+    <DemoSection Title="SbsGrid — Bildirimsel Sütunlar, Türkçe Arama, Sıralama & Alt Toplamlar"
+                 Subtitle="Declarative SbsGridColumn, özel hücre şablonları, Excel/PDF dışa aktarım ve aksiyon butonları"
+                 Icon="fa fa-table"
+                 RazorCode="@DeclarativeRazor"
+                 CSharpCode="@ImperativeCSharp"
+                 ApiParams="@GridApi">
+        <HeaderActions>
+            @if (_selected is not null)
+            {
+                <SbsBadge Text="@($"Seçili: {_selected.FullName}")" Color="SbsColor.Primary" />
+            }
+        </HeaderActions>
+        <DemoContent>
+            <SbsGrid TItem="Employee" Data="_employees" FillHeight="false" PageSize="6"
+                     Title="Personel Listesi" TitleIcon="fa fa-users"
+                     ShowSearchBox="true" ShowExportButton="true"
+                     ShowEditAction="true" ShowDeleteAction="true"
+                     OnEditClick="OnEdit" OnDeleteClick="OnDelete"
+                     @bind-SelectedItem="_selected">
+                <SbsGridColumn TItem="Employee" Field="@nameof(Employee.Id)" Caption="Sicil" Width="80px" Align="center" FooterAggregate="SbsGridAggregate.Count" />
+                <SbsGridColumn TItem="Employee" Field="@nameof(Employee.FullName)" Caption="Ad Soyad" />
+                <SbsGridColumn TItem="Employee" Field="@nameof(Employee.Department)" Caption="Birim" />
+                <SbsGridColumn TItem="Employee" Field="@nameof(Employee.Salary)" Caption="Ücret" Align="right"
+                               ValueGetter="x => x.Salary" FooterAggregate="SbsGridAggregate.Average" FooterFormat="N2">
+                    <Template Context="row">
+                        <SbsText Monospace="true">@row.Salary.ToString("N2") ₺</SbsText>
+                    </Template>
+                </SbsGridColumn>
+                <SbsGridColumn TItem="Employee" Field="@nameof(Employee.Active)" Caption="Durum" Width="110px" Align="center">
+                    <Template Context="row">
+                        <SbsBadge Text="@(row.Active ? "Aktif" : "Pasif")"
+                                  Color="@(row.Active ? SbsColor.Success : SbsColor.Muted)" Dot="true" />
+                    </Template>
+                </SbsGridColumn>
+            </SbsGrid>
+        </DemoContent>
+    </DemoSection>
+</SbsStack>
+
+@code {
+    private sealed record Employee(int Id, string FullName, string Department, decimal Salary, bool Active);
+
+    private Employee? _selected;
+    private readonly List<Employee> _employees =
+    [
+        new(1001, "Serdar Özdemir", "Bilgi İşlem", 68500m, true),
+        new(1002, "Ayşe Şahin", "İnsan Kaynakları", 54200m, true),
+        new(1003, "Mehmet Çelik", "Mali İşler", 59800m, true),
+        new(1004, "Zeynep Öztürk", "Çankaya Sağlık Birimi", 51400m, true),
+        new(1005, "İbrahim Güneş", "Destek Hizmetleri", 46900m, false),
+        new(1006, "Elif Yıldırım", "Bilgi İşlem", 63200m, true),
+        new(1007, "Murat Aydın", "Eğitim ve Ar-Ge", 57600m, true)
+    ];
+
+    private void OnEdit(Employee e) => Toast.Info($"Düzenle tıklandı: {e.FullName}");
+    private void OnDelete(Employee e) => Toast.Warning($"Sil tıklandı: {e.FullName}");
+
+    private static readonly IReadOnlyList<ApiParamRow> GridApi =
+    [
+        new("Data", "IEnumerable<TItem>?", "null", "Grid veri kaynağı."),
+        new("Columns", "List<SbsGridColumn<TItem>>?", "null", "Kod tarafından verilen sütun listesi (opsiyonel)."),
+        new("PageSize", "int", "50", "Sayfa başına kayıt sayısı."),
+        new("FillHeight", "bool", "true", "SbsPage içinde kalan dikey yüksekliği doldurur."),
+        new("ShowSearchBox", "bool", "true", "Türkçe karakter duyarsız arama kutusunu gösterir."),
+        new("ShowExportButton", "bool", "false", "Excel (CSV) ve PDF yazdır butonlarını açar."),
+        new("ShowEditAction / ShowDeleteAction", "bool", "false", "Satır içi düzenle/sil aksiyon sütunları."),
+        new("EditClaimCode / DeleteClaimCode", "string?", "null", "ISbsAuthorizationProvider ile satır aksiyon yetki kontrolü.")
+    ];
+
+    private const string DeclarativeRazor = """
+        <SbsGrid TItem="Employee" Data="_employees" PageSize="10"
+                 Title="Personel Listesi" ShowSearchBox="true" ShowExportButton="true"
+                 ShowEditAction="true" ShowDeleteAction="true"
+                 OnEditClick="OnEdit" OnDeleteClick="OnDelete"
+                 @bind-SelectedItem="_selected">
+            <SbsGridColumn TItem="Employee" Field="@nameof(Employee.Id)" Caption="Sicil"
+                           Width="80px" Align="center" FooterAggregate="SbsGridAggregate.Count" />
+            <SbsGridColumn TItem="Employee" Field="@nameof(Employee.FullName)" Caption="Ad Soyad" />
+            <SbsGridColumn TItem="Employee" Field="@nameof(Employee.Department)" Caption="Birim" />
+            <SbsGridColumn TItem="Employee" Field="@nameof(Employee.Salary)" Caption="Ücret" Align="right"
+                           ValueGetter="x => x.Salary" FooterAggregate="SbsGridAggregate.Average" FooterFormat="N2">
+                <Template Context="row">
+                    <SbsText Monospace="true">@row.Salary.ToString("N2") ₺</SbsText>
+                </Template>
+            </SbsGridColumn>
+            <SbsGridColumn TItem="Employee" Field="@nameof(Employee.Active)" Caption="Durum" Width="110px" Align="center">
+                <Template Context="row">
+                    <SbsBadge Text="@(row.Active ? "Aktif" : "Pasif")"
+                              Color="@(row.Active ? SbsColor.Success : SbsColor.Muted)" Dot="true" />
+                </Template>
+            </SbsGridColumn>
+        </SbsGrid>
+        """;
+
+    private const string ImperativeCSharp = """
+        // Alternatif: Liste tabanlı (imperative) sütun tanımı
+        private readonly List<SbsGridColumn<Employee>> _columns =
+        [
+            new() { Field = nameof(Employee.Id), Caption = "Sicil", Width = "80px", Align = "center" },
+            new() { Field = nameof(Employee.FullName), Caption = "Ad Soyad" },
+            new() { Field = nameof(Employee.Department), Caption = "Birim" },
+            new() { Field = nameof(Employee.Salary), Caption = "Ücret", Align = "right",
+                    FooterAggregate = SbsGridAggregate.Sum, FooterFormat = "N2" }
+        ];
+        """;
+}

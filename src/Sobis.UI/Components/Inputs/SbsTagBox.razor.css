@@ -1,0 +1,115 @@
+.sbs-tagbox-trigger {
+    min-height: var(--sbs-control-h-md);
+    height: var(--sbs-control-h-md);
+    display: flex;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    justify-content: flex-start;
+    text-align: left;
+    gap: var(--sbs-space-xs);
+    padding: 2px 44px 2px 8px;
+    cursor: pointer;
+    align-items: center;
+    position: relative;
+}
+
+.sbs-tagbox-disabled {
+    opacity: 0.6;
+    cursor: not-allowed !important;
+}
+
+.sbs-tagbox-caret {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+}
+
+.sbs-tagbox-clear {
+    position: absolute;
+    right: 26px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: var(--sbs-text-muted);
+    font-size: var(--sbs-fs-xs);
+    padding: 2px;
+}
+
+.sbs-tagbox-clear:hover {
+    color: var(--sbs-danger);
+}
+
+.sbs-tagbox-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--sbs-accent);
+    color: var(--sbs-primary-contrast);
+    font-size: var(--sbs-fs-xs);
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: var(--sbs-radius-xs);
+    line-height: 1.35;
+    max-width: 145px;
+    min-width: 0;
+    flex-shrink: 1;
+}
+
+.sbs-tagbox-chip-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sbs-tagbox-chip-remove {
+    cursor: pointer;
+    font-size: 10px;
+    opacity: 0.85;
+    flex-shrink: 0;
+}
+
+.sbs-tagbox-chip-remove:hover {
+    opacity: 1;
+}
+
+.sbs-tagbox-more {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    background: var(--sbs-surface-hover);
+    border: 1px solid var(--sbs-border);
+    color: var(--sbs-text);
+    font-size: var(--sbs-fs-xs);
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: var(--sbs-radius-xs);
+    line-height: 1.35;
+}
+
+.sbs-tagbox-search-wrap {
+    padding: 6px;
+    border-bottom: 1px solid var(--sbs-border);
+    position: relative;
+}
+
+.sbs-tagbox-search-input {
+    width: 100%;
+    padding-right: 25px;
+    font-size: var(--sbs-fs-xs);
+}
+
+.sbs-tagbox-search-clear {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: var(--sbs-text-muted);
+    font-size: var(--sbs-fs-sm);
+}
+
+.sbs-tagbox-search-clear:hover {
+    color: var(--sbs-danger);
+}

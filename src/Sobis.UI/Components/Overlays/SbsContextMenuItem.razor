@@ -1,0 +1,55 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<div class="@ItemClass"
+     style="@BuildStyle()"
+     role="menuitem"
+     aria-disabled="@(Disabled ? "true" : "false")"
+     @onclick="OnClickCallbackAsync"
+     @attributes="UserAttributes">
+    @if (!string.IsNullOrEmpty(Icon))
+    {
+        <i class="@Icon"></i>
+    }
+    @if (!string.IsNullOrEmpty(Text))
+    {
+        <span>@Text</span>
+    }
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter] internal SbsContextMenu? ParentMenu { get; set; }
+
+    [Parameter] public string Text { get; set; } = string.Empty;
+    [Parameter] public string Icon { get; set; } = string.Empty;
+    [Parameter] public string Variant { get; set; } = "default";
+    [Parameter] public SbsVariant? ItemVariant { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string EffectiveVariant => ItemVariant?.ToCss()
+        ?? (string.IsNullOrWhiteSpace(Variant) ? "default" : Variant.Trim().ToLowerInvariant());
+
+    private string ItemClass => BuildClass(
+        CreateCssBuilder("sbs-ctx-item")
+            .AddClass("sbs-ctx-danger", EffectiveVariant == "danger")
+            .AddClass("sbs-ctx-success", EffectiveVariant == "success")
+            .AddClass("sbs-ctx-warning", EffectiveVariant == "warning")
+            .AddClass("sbs-ctx-info", EffectiveVariant == "info")
+            .AddClass("sbs-ctx-primary", EffectiveVariant == "primary")
+            .AddClass("sbs-ctx-disabled", Disabled));
+
+    private async Task OnClickCallbackAsync(MouseEventArgs e)
+    {
+        if (Disabled)
+            return;
+
+        if (OnClick.HasDelegate)
+            await OnClick.InvokeAsync(e);
+
+        if (ParentMenu is not null)
+            await ParentMenu.NotifyItemClickedAsync();
+    }
+}

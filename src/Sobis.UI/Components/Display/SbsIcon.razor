@@ -1,0 +1,34 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<i class="@RootClass"
+   style="@RootStyle"
+   title="@Title"
+   aria-hidden="@(string.IsNullOrWhiteSpace(Title) ? "true" : null)"
+   @attributes="UserAttributes"></i>
+
+@code {
+    /// <summary>Icon class name (e.g. "fa-solid fa-user", "fa fa-search").</summary>
+    [Parameter] public string Name { get; set; } = "";
+
+    /// <summary>Icon size token.</summary>
+    [Parameter] public SbsSize Size { get; set; } = SbsSize.Md;
+
+    /// <summary>Semantic icon color.</summary>
+    [Parameter] public SbsColor Color { get; set; } = SbsColor.Default;
+
+    /// <summary>Continuously rotates the icon.</summary>
+    [Parameter] public bool Spin { get; set; }
+
+    /// <summary>Optional native title tooltip.</summary>
+    [Parameter] public string? Title { get; set; }
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-icon")
+            .AddClass(Name)
+            .AddClass($"sbs-icon-{Size.ToCss()}")
+            .AddClass($"sbs-icon-{Color.ToCss()}", Color != SbsColor.Default)
+            .AddClass("sbs-icon-spin", Spin));
+
+    private string? RootStyle => BuildStyle();
+}

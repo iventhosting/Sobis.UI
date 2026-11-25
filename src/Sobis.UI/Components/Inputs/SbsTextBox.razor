@@ -1,0 +1,107 @@
+@namespace Sobis.UI
+@inherits SbsInputBase<string?>
+
+@if (IsImmediate)
+{
+    <input type="@Type"
+           class="@InputClass"
+           style="@BuildStyle()"
+           @bind="_currentValue"
+           @bind:event="oninput"
+           @bind:after="NotifyChangedAsync"
+           @onchange="OnChangeAsync"
+           placeholder="@Placeholder"
+           autocomplete="@AutoComplete"
+           disabled="@EffectiveDisabled"
+           readonly="@EffectiveReadOnly"
+           @attributes="UserAttributes" />
+}
+else
+{
+    <input type="@Type"
+           class="@InputClass"
+           style="@BuildStyle()"
+           @bind="_currentValue"
+           @bind:event="onchange"
+           @bind:after="NotifyChangedAsync"
+           placeholder="@Placeholder"
+           autocomplete="@AutoComplete"
+           disabled="@EffectiveDisabled"
+           readonly="@EffectiveReadOnly"
+           @attributes="UserAttributes" />
+}
+
+@code {
+    [Parameter] public string Type { get; set; } = "text";
+    [Parameter] public string? AutoComplete { get; set; }
+    [Parameter] public bool Immediate { get; set; } = true;
+    [Parameter] public SbsBindMode? BindMode { get; set; }
+    /// <summary>Legacy string attribute absorbed cleanly so DevExpress-style BindValueMode="..." neither fails Razor compilation nor leaks into HTML.</summary>
+    [Parameter] public string? BindValueMode { get; set; }
+
+    private string? _currentValue;
+    private string? _lastParameterValue;
+    private string? _lastNotifiedValue;
+
+    private bool IsImmediate
+    {
+        get
+        {
+            if (BindMode.HasValue)
+                return BindMode.Value == SbsBindMode.OnInput;
+
+            if (!string.IsNullOrWhiteSpace(BindValueMode))
+            {
+                if (BindValueMode.EndsWith("OnChange", StringComparison.OrdinalIgnoreCase)
+                    || BindValueMode.EndsWith("OnLostFocus", StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                if (BindValueMode.EndsWith("OnInput", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return Immediate;
+        }
+    }
+
+    private string InputClass => BuildClass(
+        CreateCssBuilder("sbs-input")
+            .AddClass("sbs-input-invalid", IsInvalid));
+
+    protected override bool HasValue() => !string.IsNullOrWhiteSpace(_currentValue);
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        // Preserve browser caret position when parent re-renders with the same stale echo
+        // while ValueChanged is still processing.
+        if (Value != _lastParameterValue)
+        {
+            _lastParameterValue = Value;
+            _currentValue = Value;
+        }
+    }
+
+    private async Task NotifyChangedAsync()
+    {
+        _lastNotifiedValue = _currentValue;
+        await NotifyValueChangedAsync(_currentValue);
+    }
+
+    private async Task OnChangeAsync(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString();
+        // Ignore duplicate change event for the value already reported via oninput
+        // so Enter/blur does not clobber programmatic clears by the parent; still handles autofill.
+        if (val == _lastNotifiedValue)
+            return;
+
+        if (_currentValue != val)
+        {
+            _currentValue = val;
+            _lastNotifiedValue = val;
+            await NotifyValueChangedAsync(val);
+        }
+    }
+}

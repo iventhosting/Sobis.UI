@@ -1,0 +1,92 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<div class="@RootClass" style="@RootStyle" @attributes="UserAttributes">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>
+    /// CSS grid-template-columns value (e.g. "1fr 2fr", "220px 1fr") or an integer column count string (e.g. "2", "3", "12").
+    /// </summary>
+    [Parameter] public string? Columns { get; set; }
+
+    /// <summary>Convenience integer column count when using equal-width columns (e.g. 2, 3, 12).</summary>
+    [Parameter] public int? ColumnCount { get; set; }
+
+    /// <summary>Optional CSS grid-template-rows value.</summary>
+    [Parameter] public string? Rows { get; set; }
+
+    /// <summary>Optional minimum height (e.g. "var(--sbs-form-h)", "200px").</summary>
+    [Parameter] public string? MinHeight { get; set; }
+
+    /// <summary>Grid gap token. Defaults to Sm (8px).</summary>
+    [Parameter] public SbsSpacing Gap { get; set; } = SbsSpacing.Sm;
+
+    /// <summary>Optional row-gap override.</summary>
+    [Parameter] public SbsSpacing? RowGap { get; set; }
+
+    /// <summary>Optional column-gap override.</summary>
+    [Parameter] public SbsSpacing? ColumnGap { get; set; }
+
+    /// <summary>Cross-axis alignment for grid items.</summary>
+    [Parameter] public SbsAlign? AlignItems { get; set; }
+
+    /// <summary>
+    /// Viewport width (px) below which columns stack to 1fr. Standard thresholds: 0 (disabled), 576, 768 (default), 992, 1200.
+    /// </summary>
+    [Parameter] public int ResponsiveBreakpoint { get; set; } = 768;
+
+    /// <summary>Fills remaining vertical space in a flex parent (replaces .sbs-grid-row).</summary>
+    [Parameter] public bool FillHeight { get; set; }
+
+    /// <summary>Stretches direct card/form-group children to equal row height while keeping dropdown overflow visible.</summary>
+    [Parameter] public bool EqualHeightItems { get; set; } = true;
+
+    /// <summary>Grid content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string BreakpointClass => ResponsiveBreakpoint switch
+    {
+        <= 0 => "sbs-gl-bp-none",
+        <= 576 => "sbs-gl-bp-sm",
+        <= 768 => "sbs-gl-bp-md",
+        <= 992 => "sbs-gl-bp-lg",
+        _ => "sbs-gl-bp-xl"
+    };
+
+    private string EffectiveColumns
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(Columns))
+            {
+                var trimmed = Columns.Trim();
+                if (int.TryParse(trimmed, out var parsed) && parsed > 0)
+                    return $"repeat({parsed}, minmax(0, 1fr))";
+                return trimmed;
+            }
+
+            if (ColumnCount is > 0)
+                return $"repeat({ColumnCount.Value}, minmax(0, 1fr))";
+
+            return "repeat(12, minmax(0, 1fr))";
+        }
+    }
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-grid-layout")
+            .AddClass(BreakpointClass)
+            .AddClass("sbs-grid-layout-fill", FillHeight)
+            .AddClass("sbs-grid-layout-equal", EqualHeightItems));
+
+    private string? RootStyle => BuildStyle(
+        CreateStyleBuilder()
+            .AddStyle("--sbs-gl-cols", EffectiveColumns)
+            .AddStyle("grid-template-rows", Rows, !string.IsNullOrWhiteSpace(Rows))
+            .AddStyle("min-height", MinHeight, !string.IsNullOrWhiteSpace(MinHeight))
+            .AddStyle("gap", Gap.ToCssVar(), !RowGap.HasValue && !ColumnGap.HasValue)
+            .AddStyle("row-gap", RowGap?.ToCssVar(), RowGap.HasValue)
+            .AddStyle("column-gap", ColumnGap?.ToCssVar(), ColumnGap.HasValue)
+            .AddStyle("align-items", AlignItems?.ToCss(), AlignItems.HasValue));
+}

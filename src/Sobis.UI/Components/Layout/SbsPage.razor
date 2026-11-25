@@ -1,0 +1,75 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@inject IServiceProvider ServiceProvider
+
+<div class="@HostClass">
+    <CascadingValue Name="CascadedRequiredFields" Value="RequiredFields" IsFixed="false">
+        <CascadingValue Name="CascadedEditableFields" Value="EditableFields" IsFixed="false">
+            <div class="@PageClass" style="@PageStyle" @attributes="UserAttributes">
+                @ChildContent
+            </div>
+        </CascadingValue>
+    </CascadingValue>
+
+    @if (Busy)
+    {
+        <div class="sbs-loading-overlay" role="status" aria-live="polite" aria-busy="true">
+            <div class="sbs-loading-card sbs-loading-@BusySize.ToCss()">
+                <i class="fa fa-circle-notch fa-spin" aria-hidden="true"></i>
+                <span>@EffectiveBusyText</span>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>When true, displays a loading overlay over the entire page surface.</summary>
+    [Parameter] public bool Busy { get; set; }
+
+    /// <summary>Optional custom loading overlay message. Defaults to the localized loading label.</summary>
+    [Parameter] public string? BusyText { get; set; }
+
+    /// <summary>Loading card size variant.</summary>
+    [Parameter] public SbsSize BusySize { get; set; } = SbsSize.Lg;
+
+    /// <summary>Tenant/form required field names cascaded as CascadedRequiredFields.</summary>
+    [Parameter] public HashSet<string>? RequiredFields { get; set; }
+
+    /// <summary>Editable field names cascaded as CascadedEditableFields.</summary>
+    [Parameter] public HashSet<string>? EditableFields { get; set; }
+
+    /// <summary>Optional padding override. Defaults to theme standard (12px).</summary>
+    [Parameter] public SbsSpacing? Padding { get; set; }
+
+    /// <summary>Optional vertical gap between page sections. Defaults to 10px.</summary>
+    [Parameter] public SbsSpacing? Gap { get; set; }
+
+    /// <summary>Allows vertical page scrolling when viewport height is constrained. Defaults to true.</summary>
+    [Parameter] public bool Scrollable { get; set; } = true;
+
+    /// <summary>Page content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string HostClass => CssBuilder.Default("sbs-loading-wrap sbs-page-host").ToString();
+
+    private string PageClass => BuildClass(
+        CreateCssBuilder("sbs-page")
+            .AddClass("sbs-page-noscroll", !Scrollable));
+
+    private string? PageStyle => BuildStyle(
+        CreateStyleBuilder()
+            .AddStyle("padding", Padding?.ToCssVar(), Padding.HasValue)
+            .AddStyle("gap", Gap?.ToCssVar(), Gap.HasValue));
+
+    private string EffectiveBusyText
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(BusyText))
+                return BusyText;
+
+            var localizer = ServiceProvider.GetService(typeof(ISbsLocalizer)) as ISbsLocalizer;
+            return localizer?[SbsLocalizerKeys.Loading] ?? "Yükleniyor...";
+        }
+    }
+}

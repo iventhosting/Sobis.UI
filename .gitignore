@@ -1,0 +1,11 @@
+bin/
+obj/
+artifacts/
+.vs/
+.vscode/
+*.user
+*.suo
+*.nupkg
+*.snupkg
+Thumbs.db
+.DS_Store

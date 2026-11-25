@@ -1,0 +1,137 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@inject IServiceProvider ServiceProvider
+
+<span class="@RootClass"
+      style="@RootStyle"
+      role="@(IsInteractive ? "button" : null)"
+      tabindex="@(IsInteractive && !Disabled ? 0 : null)"
+      aria-pressed="@(SelectedChanged.HasDelegate ? Selected.ToString().ToLowerInvariant() : null)"
+      aria-disabled="@(Disabled ? "true" : null)"
+      @onclick="HandleClickAsync"
+      @onkeydown="HandleKeyDownAsync"
+      @attributes="UserAttributes">
+    @if (!string.IsNullOrWhiteSpace(Icon))
+    {
+        <i class="@Icon sbs-chip-icon" aria-hidden="true"></i>
+    }
+    <span class="sbs-chip-label">
+        @if (ChildContent is not null)
+        {
+            @ChildContent
+        }
+        else
+        {
+            @Text
+        }
+    </span>
+    @if (Closable)
+    {
+        <button type="button"
+                class="sbs-chip-close"
+                disabled="@Disabled"
+                aria-label="@CloseLabel"
+                @onclick="HandleCloseAsync"
+                @onclick:stopPropagation="true">
+            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+        </button>
+    }
+</span>
+
+@code {
+    /// <summary>Chip display text.</summary>
+    [Parameter] public string? Text { get; set; }
+
+    /// <summary>Semantic color token.</summary>
+    [Parameter] public SbsColor Color { get; set; } = SbsColor.Default;
+
+    /// <summary>Visual variant (Soft, Filled, Outlined).</summary>
+    [Parameter] public SbsVariant Variant { get; set; } = SbsVariant.Soft;
+
+    /// <summary>Chip size (Xs, Sm, Md, Lg).</summary>
+    [Parameter] public SbsSize Size { get; set; } = SbsSize.Sm;
+
+    /// <summary>Optional leading icon CSS class.</summary>
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>Displays a close/remove button on the trailing side of the chip.</summary>
+    [Parameter] public bool Closable { get; set; }
+
+    /// <summary>Selected / active toggle state.</summary>
+    [Parameter] public bool Selected { get; set; }
+
+    /// <summary>Two-way binding callback for Selected.</summary>
+    [Parameter] public EventCallback<bool> SelectedChanged { get; set; }
+
+    /// <summary>Disables click and close interactions.</summary>
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>Callback invoked when the chip body is clicked.</summary>
+    [Parameter] public EventCallback OnClick { get; set; }
+
+    /// <summary>Callback invoked when the close button is clicked.</summary>
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    /// <summary>Optional custom chip label content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool IsInteractive => OnClick.HasDelegate || SelectedChanged.HasDelegate;
+
+    private string NormalizedVariant => Variant switch
+    {
+        SbsVariant.Filled or SbsVariant.Primary => "filled",
+        SbsVariant.Outlined => "outlined",
+        _ => "soft"
+    };
+
+    private string CloseLabel
+    {
+        get
+        {
+            var localizer = ServiceProvider.GetService(typeof(ISbsLocalizer)) as ISbsLocalizer;
+            return localizer?[SbsLocalizerKeys.Close] ?? "Kapat";
+        }
+    }
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-chip")
+            .AddClass($"sbs-chip-{Color.ToCss()}")
+            .AddClass($"sbs-chip-{NormalizedVariant}")
+            .AddClass($"sbs-chip-{Size.ToCss()}")
+            .AddClass("sbs-chip-interactive", IsInteractive && !Disabled)
+            .AddClass("sbs-chip-selected", Selected)
+            .AddClass("sbs-chip-disabled", Disabled));
+
+    private string? RootStyle => BuildStyle();
+
+    private async Task HandleClickAsync()
+    {
+        if (Disabled)
+            return;
+
+        if (SelectedChanged.HasDelegate)
+        {
+            Selected = !Selected;
+            await SelectedChanged.InvokeAsync(Selected);
+        }
+
+        if (OnClick.HasDelegate)
+            await OnClick.InvokeAsync();
+    }
+
+    private Task HandleKeyDownAsync(KeyboardEventArgs e)
+    {
+        if (!Disabled && IsInteractive && (e.Key == "Enter" || e.Key == " "))
+            return HandleClickAsync();
+
+        return Task.CompletedTask;
+    }
+
+    private async Task HandleCloseAsync()
+    {
+        if (Disabled)
+            return;
+
+        await OnClose.InvokeAsync();
+    }
+}

@@ -1,0 +1,72 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<CascadingValue Value="_context" IsFixed="false">
+    <div class="@RootClass" style="@RootStyle" @attributes="UserAttributes">
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    /// <summary>Number of form columns. Defaults to 1.</summary>
+    [Parameter] public int Columns { get; set; } = 1;
+
+    /// <summary>Optional custom CSS grid-template-columns override (e.g. "1fr 2fr").</summary>
+    [Parameter] public string? ColumnTemplate { get; set; }
+
+    /// <summary>Fixed width for left-aligned labels across all child SbsField items (e.g. "145px").</summary>
+    [Parameter] public string? LabelWidth { get; set; }
+
+    /// <summary>Label placement for all child SbsField items (Left, Top, Hidden).</summary>
+    [Parameter] public SbsLabelPosition LabelPosition { get; set; } = SbsLabelPosition.Left;
+
+    /// <summary>Disables all child inputs via cascading SbsFormContext.</summary>
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>Marks all child inputs read-only via cascading SbsFormContext.</summary>
+    [Parameter] public bool ReadOnly { get; set; }
+
+    /// <summary>Uses compact enterprise spacing between fields. Defaults to true.</summary>
+    [Parameter] public bool Compact { get; set; } = true;
+
+    /// <summary>Cascaded size token for child controls.</summary>
+    [Parameter] public SbsSize Size { get; set; } = SbsSize.Md;
+
+    /// <summary>Grid gap between form items/columns.</summary>
+    [Parameter] public SbsSpacing Gap { get; set; } = SbsSpacing.Xs;
+
+    /// <summary>Form fields or form groups.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [CascadingParameter] private SbsFormContext? ParentContext { get; set; }
+
+    private readonly SbsFormContext _context = new();
+
+    protected override void OnParametersSet()
+    {
+        _context.Disabled = Disabled || (ParentContext?.Disabled ?? false);
+        _context.ReadOnly = ReadOnly || (ParentContext?.ReadOnly ?? false);
+        _context.LabelWidth = !string.IsNullOrWhiteSpace(LabelWidth) ? LabelWidth : ParentContext?.LabelWidth;
+        _context.LabelPosition = LabelPosition;
+        _context.Compact = Compact;
+        _context.Size = Size;
+    }
+
+    private bool IsMultiColumn => !string.IsNullOrWhiteSpace(ColumnTemplate) || Columns > 1;
+
+    private string EffectiveColumns => !string.IsNullOrWhiteSpace(ColumnTemplate)
+        ? ColumnTemplate.Trim()
+        : $"repeat({Math.Max(1, Columns)}, minmax(0, 1fr))";
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-form-layout")
+            .AddClass("sbs-form-layout-grid", IsMultiColumn)
+            .AddClass("sbs-form-layout-compact", Compact)
+            .AddClass("sbs-form-layout-disabled", _context.Disabled));
+
+    private string? RootStyle => BuildStyle(
+        CreateStyleBuilder()
+            .AddStyle("--sbs-fl-cols", EffectiveColumns, IsMultiColumn)
+            .AddStyle("gap", Gap.ToCssVar())
+            .AddStyle("--sbs-label-w", _context.LabelWidth, !string.IsNullOrWhiteSpace(_context.LabelWidth)));
+}

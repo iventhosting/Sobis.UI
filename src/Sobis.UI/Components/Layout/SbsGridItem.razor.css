@@ -1,0 +1,23 @@
+.sbs-grid-item {
+    min-width: 0;
+    grid-column: var(--sbs-gi-col, auto);
+}
+
+.sbs-grid-item-fill {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+}
+
+@media (max-width: 992px) {
+    .sbs-grid-item-md {
+        grid-column: var(--sbs-gi-md, auto);
+    }
+}
+
+@media (max-width: 768px) {
+    .sbs-grid-item-sm {
+        grid-column: var(--sbs-gi-sm, auto);
+    }
+}

@@ -1,0 +1,56 @@
+@page "/display"
+
+<PageTitle>Sobis.UI — Görünüm & Geri Bildirim</PageTitle>
+
+<SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Md">
+    <DemoSection Title="Butonlar, Uyarılar, Rozetler, Çipler, İlerleme & İskelet"
+                 Subtitle="SbsButton, SbsAlert, SbsBadge, SbsChip, SbsProgress, SbsSkeleton, SbsEmptyState"
+                 Icon="fa fa-palette"
+                 RazorCode="@DisplayRazor">
+        <DemoContent>
+            <SbsStack Direction="SbsDirection.Row" Wrap="true" Gap="SbsSpacing.Xs">
+                <SbsButton Text="Primary" ButtonVariant="SbsVariant.Primary" />
+                <SbsButton Text="Save" ButtonVariant="SbsVariant.Save" Icon="fa fa-save" />
+                <SbsButton Text="Secondary" ButtonVariant="SbsVariant.Secondary" />
+                <SbsButton Text="Warning" ButtonVariant="SbsVariant.Warning" />
+                <SbsButton Text="Danger" ButtonVariant="SbsVariant.Danger" Icon="fa fa-trash" />
+                <SbsButton Text="Ghost" ButtonVariant="SbsVariant.Ghost" />
+            </SbsStack>
+
+            <SbsDivider Text="Uyarılar & Rozetler" />
+            <SbsAlert Severity="SbsAlertSeverity.Success" Title="Başarılı" Text="Sıfır div, sıfır Bootstrap ile temiz arayüz." Dismissible="true" Dense="true" />
+            <SbsAlert Severity="SbsAlertSeverity.Warning" Text="Outlined uyarı örneği." Outlined="true" Dense="true" />
+
+            <SbsStack Direction="SbsDirection.Row" Wrap="true" Gap="SbsSpacing.Xs">
+                <SbsBadge Text="Soft" Color="SbsColor.Primary" Variant="SbsVariant.Soft" />
+                <SbsBadge Text="Filled" Color="SbsColor.Success" Variant="SbsVariant.Filled" />
+                <SbsBadge Text="Outlined" Color="SbsColor.Warning" Variant="SbsVariant.Outlined" />
+                <SbsBadge Text="Aktif" Color="SbsColor.Success" Dot="true" />
+                <SbsChip Text="Blazor .NET 10" Color="SbsColor.Primary" @bind-Selected="_chip1" />
+                <SbsChip Text="Zero-Div" Color="SbsColor.Success" @bind-Selected="_chip2" />
+            </SbsStack>
+
+            <SbsDivider Text="İlerleme & İskelet" />
+            <SbsStack Direction="SbsDirection.Row" Align="SbsAlign.Center" Gap="SbsSpacing.Sm">
+                <SbsButton Text="-10%" Variant="ghost" Size="sm" OnClick="@(() => _progress = Math.Max(0, _progress - 10))" />
+                <SbsButton Text="+10%" Variant="primary" Size="sm" OnClick="@(() => _progress = Math.Min(100, _progress + 10))" />
+                <SbsProgress Value="_progress" Color="SbsColor.Primary" ShowLabel="true" Striped="true" />
+            </SbsStack>
+            <SbsSkeleton Variant="SbsSkeletonVariant.Text" Count="2" />
+        </DemoContent>
+    </DemoSection>
+</SbsStack>
+
+@code {
+    private bool _chip1 = true;
+    private bool _chip2;
+    private double _progress = 65;
+
+    private const string DisplayRazor = """
+        <SbsButton Text="Kaydet" ButtonVariant="SbsVariant.Save" Icon="fa fa-save" />
+        <SbsAlert Severity="SbsAlertSeverity.Success" Title="Başarılı" Text="Mesaj" Dismissible="true" />
+        <SbsBadge Text="Aktif" Color="SbsColor.Success" Dot="true" />
+        <SbsProgress Value="65" Color="SbsColor.Primary" ShowLabel="true" Striped="true" />
+        <SbsSkeleton Variant="SbsSkeletonVariant.Text" Count="2" />
+        """;
+}

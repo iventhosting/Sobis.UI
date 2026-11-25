@@ -1,0 +1,267 @@
+@namespace Sobis.UI
+@inherits SbsInputBase<DateTime?>
+@implements IAsyncDisposable
+@using System.Globalization
+@inject IJSRuntime JS
+@inject ISbsLocalizer Loc
+
+<div class="@RootClass" style="@BuildStyle()" @ref="_root" @attributes="UserAttributes">
+    <div class="@TriggerClass" @onclick="OpenOnTriggerClick">
+        <input type="text"
+               class="sbs-combo-text sbs-datebox-input"
+               placeholder="@EffectivePlaceholder"
+               disabled="@EffectiveDisabled"
+               readonly="@EffectiveReadOnly"
+               value="@(Value.HasValue ? Value.Value.ToString(Format, CultureInfo.CurrentCulture) : string.Empty)"
+               @onchange="OnInputChangedAsync"
+               @onkeydown="HandleKeyDownAsync" />
+
+        <i class="fa fa-calendar sbs-combo-caret @(_open ? "sbs-combo-caret-open" : "")"
+           @onclick:stopPropagation="true"
+           @onclick="ToggleAsync"></i>
+    </div>
+
+    @if (CanClear)
+    {
+        <button type="button"
+                class="sbs-combo-clear"
+                title="@Loc[SbsLocalizerKeys.Clear]"
+                @onclick:stopPropagation="true"
+                @onclick="OnClearAsync">
+            <i class="fa fa-times"></i>
+        </button>
+    }
+
+    @if (_open)
+    {
+        <div class="sbs-combo-panel sbs-date-panel @(string.Equals(DropDownDirection, "Up", StringComparison.OrdinalIgnoreCase) ? "sbs-combo-panel-up" : "")"
+             popover="manual"
+             data-sbs-fixed-width="true"
+             @ref="_panel"
+             @onclick:stopPropagation="true">
+            <div class="sbs-date-header">
+                <i class="fa fa-chevron-left" @onclick="PrevMonth"></i>
+                <span>@_currentMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture)</span>
+                <i class="fa fa-chevron-right" @onclick="NextMonth"></i>
+            </div>
+
+            <div class="sbs-date-grid">
+                <div class="sbs-date-day-name">@Loc[SbsLocalizerKeys.DayMon]</div>
+                <div class="sbs-date-day-name">@Loc[SbsLocalizerKeys.DayTue]</div>
+                <div class="sbs-date-day-name">@Loc[SbsLocalizerKeys.DayWed]</div>
+                <div class="sbs-date-day-name">@Loc[SbsLocalizerKeys.DayThu]</div>
+                <div class="sbs-date-day-name">@Loc[SbsLocalizerKeys.DayFri]</div>
+                <div class="sbs-date-day-name">@Loc[SbsLocalizerKeys.DaySat]</div>
+                <div class="sbs-date-day-name">@Loc[SbsLocalizerKeys.DaySun]</div>
+
+                @foreach (var day in GetDaysInMonth())
+                {
+                    var d = day;
+                    var isSelected = Value.HasValue && Value.Value.Date == d.Date;
+                    var isMuted = d.Month != _currentMonth.Month;
+                    var isToday = d.Date == DateTime.Today;
+                    var isDisabledDay = IsDateDisabled(d);
+
+                    <div class="sbs-date-cell @(isSelected ? "selected" : "") @(isMuted ? "muted" : "") @(isToday && !isSelected ? "today" : "") @(isDisabledDay ? "disabled" : "")"
+                         @onclick="@(() => SelectDateAsync(d))">
+                        @d.Day
+                    </div>
+                }
+            </div>
+
+            <div class="sbs-date-footer">
+                <span @onclick="SelectTodayAsync">@Loc[SbsLocalizerKeys.Today]</span>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string DropDownDirection { get; set; } = "Down";
+    [Parameter] public bool ShowClear { get; set; } = true;
+    [Parameter] public string Format { get; set; } = "dd.MM.yyyy";
+    [Parameter] public DateTime? MinDate { get; set; }
+    [Parameter] public DateTime? MaxDate { get; set; }
+    [Parameter] public EventCallback<KeyboardEventArgs> OnKeyDown { get; set; }
+
+    private bool _open;
+    private bool _attached;
+    private ElementReference _root;
+    private ElementReference _panel;
+    private DotNetObjectReference<SbsDateBox>? _selfRef;
+    private DateTime _currentMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+    private bool CanClear => ShowClear && !EffectiveDisabled && !EffectiveReadOnly && Value.HasValue;
+
+    private string EffectivePlaceholder => string.IsNullOrEmpty(Placeholder)
+        ? Loc[SbsLocalizerKeys.DatePlaceholder]
+        : Placeholder;
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-combo sbs-datebox")
+            .AddClass("sbs-datebox-clearable", CanClear));
+
+    private string TriggerClass => CreateCssBuilder("sbs-input sbs-combo-trigger")
+        .AddClass("sbs-input-invalid", IsInvalid)
+        .AddClass("sbs-combo-trigger-open", _open)
+        .ToString();
+
+    protected override bool HasValue() => Value.HasValue;
+
+    private bool IsDateDisabled(DateTime d)
+        => (MinDate.HasValue && d.Date < MinDate.Value.Date)
+           || (MaxDate.HasValue && d.Date > MaxDate.Value.Date);
+
+    private void OpenOnTriggerClick()
+    {
+        if (EffectiveDisabled || EffectiveReadOnly)
+            return;
+
+        if (!_open)
+        {
+            _currentMonth = Value.HasValue
+                ? new DateTime(Value.Value.Year, Value.Value.Month, 1)
+                : new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            _open = true;
+        }
+    }
+
+    private async Task ToggleAsync()
+    {
+        if (EffectiveDisabled || EffectiveReadOnly)
+            return;
+
+        _open = !_open;
+        if (_open)
+        {
+            _currentMonth = Value.HasValue
+                ? new DateTime(Value.Value.Year, Value.Value.Month, 1)
+                : new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            StateHasChanged();
+        }
+        else
+        {
+            await ClosePopupAsync();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_open && _panel.Id is not null && !_attached)
+        {
+            _attached = true;
+            await RegisterOutsideClickAsync();
+        }
+    }
+
+    private void PrevMonth() => _currentMonth = _currentMonth.AddMonths(-1);
+    private void NextMonth() => _currentMonth = _currentMonth.AddMonths(1);
+
+    private async Task SelectDateAsync(DateTime d)
+    {
+        if (EffectiveDisabled || EffectiveReadOnly || IsDateDisabled(d))
+            return;
+
+        await ClosePopupAsync();
+        await NotifyValueChangedAsync(d);
+    }
+
+    private Task SelectTodayAsync() => SelectDateAsync(DateTime.Today);
+
+    private async Task OnClearAsync()
+    {
+        if (EffectiveDisabled || EffectiveReadOnly)
+            return;
+
+        await NotifyValueChangedAsync(null);
+    }
+
+    private async Task ClosePopupAsync()
+    {
+        _open = false;
+        _attached = false;
+        try { await JS.InvokeVoidAsync("sbsComboOutsideClick.detach", _root); } catch { }
+        StateHasChanged();
+    }
+
+    private async Task HandleKeyDownAsync(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape" && _open)
+        {
+            await ClosePopupAsync();
+        }
+        else if (e.Key == "ArrowDown" && !_open && !EffectiveDisabled && !EffectiveReadOnly)
+        {
+            OpenOnTriggerClick();
+        }
+
+        if (OnKeyDown.HasDelegate)
+            await OnKeyDown.InvokeAsync(e);
+    }
+
+    private List<DateTime> GetDaysInMonth()
+    {
+        var days = new List<DateTime>(42);
+        var firstDayOfMonth = new DateTime(_currentMonth.Year, _currentMonth.Month, 1);
+        var diff = (7 + (firstDayOfMonth.DayOfWeek - DayOfWeek.Monday)) % 7;
+        var currentDay = firstDayOfMonth.AddDays(-diff);
+
+        for (var i = 0; i < 42; i++)
+        {
+            days.Add(currentDay);
+            currentDay = currentDay.AddDays(1);
+        }
+
+        return days;
+    }
+
+    [JSInvokable]
+    public async Task OnOutsideClick()
+    {
+        if (_open)
+            await ClosePopupAsync();
+    }
+
+    private async Task RegisterOutsideClickAsync()
+    {
+        try
+        {
+            _selfRef ??= DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("sbsComboOutsideClick.attach", _root, _selfRef, _panel);
+        }
+        catch { }
+    }
+
+    private async Task OnInputChangedAsync(ChangeEventArgs e)
+    {
+        var str = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(str))
+        {
+            await OnClearAsync();
+            return;
+        }
+
+        string[] formats = [Format, "dd.MM.yyyy", "d.M.yyyy", "dd/MM/yyyy", "d/M/yyyy", "ddMMyyyy", "yyyy-MM-dd"];
+        if (DateTime.TryParseExact(str.Trim(), formats, CultureInfo.CurrentCulture, DateTimeStyles.None, out var dt)
+            && !IsDateDisabled(dt))
+        {
+            await SelectDateAsync(dt);
+        }
+        else if (DateTime.TryParse(str.Trim(), CultureInfo.CurrentCulture, DateTimeStyles.None, out var dt2)
+                 && !IsDateDisabled(dt2))
+        {
+            await SelectDateAsync(dt2);
+        }
+        else
+        {
+            StateHasChanged();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Dispose();
+        try { await JS.InvokeVoidAsync("sbsComboOutsideClick.detach", _root); } catch { }
+        _selfRef?.Dispose();
+    }
+}

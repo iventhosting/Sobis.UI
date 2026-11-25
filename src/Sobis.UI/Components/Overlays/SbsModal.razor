@@ -1,0 +1,84 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@inject ISbsLocalizer Loc
+
+@if (Visible)
+{
+    <div class="sbs-modal-backdrop" @onclick="HandleBackdropClickAsync">
+        <div class="@ModalClass"
+             style="@BuildStyle()"
+             role="dialog"
+             aria-modal="true"
+             @onclick:stopPropagation="true"
+             @attributes="UserAttributes">
+            <div class="sbs-modal-header">
+                @if (!string.IsNullOrEmpty(Icon))
+                {
+                    <i class="@Icon"></i>
+                }
+                <span class="sbs-modal-title">@Title</span>
+                @if (HeaderContent is not null)
+                {
+                    <div class="sbs-modal-header-content">@HeaderContent</div>
+                }
+                @if (ShowCloseButton)
+                {
+                    <button type="button"
+                            class="sbs-modal-close"
+                            title="@Loc[SbsLocalizerKeys.Close]"
+                            @onclick="CloseAsync">
+                        <i class="fa fa-times"></i>
+                    </button>
+                }
+            </div>
+            <div class="sbs-modal-body">@ChildContent</div>
+            @if (FooterContent is not null)
+            {
+                <div class="sbs-modal-footer">@FooterContent</div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Icon { get; set; } = string.Empty;
+
+    /// <summary>Modal width preset string (xs, sm, md, lg, xl, xxl, full).</summary>
+    [Parameter] public string Size { get; set; } = "md";
+
+    /// <summary>Optional strongly-typed modal width preset. Overrides <see cref="Size"/> when specified.</summary>
+    [Parameter] public SbsModalSize? ModalSize { get; set; }
+
+    [Parameter] public bool ShowCloseButton { get; set; } = true;
+    [Parameter] public bool CloseOnBackdrop { get; set; } = true;
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+
+    private string EffectiveSize => ModalSize?.ToCss()
+        ?? (string.IsNullOrWhiteSpace(Size) ? "md" : Size.Trim().ToLowerInvariant());
+
+    private string ModalClass => BuildClass(
+        CreateCssBuilder("sbs-modal")
+            .AddClass($"sbs-modal-{EffectiveSize}"));
+
+    private async Task CloseAsync()
+    {
+        Visible = false;
+        if (VisibleChanged.HasDelegate)
+            await VisibleChanged.InvokeAsync(false);
+
+        if (OnClose.HasDelegate)
+            await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleBackdropClickAsync()
+    {
+        if (CloseOnBackdrop)
+            await CloseAsync();
+    }
+}

@@ -1,0 +1,82 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@implements IDisposable
+@inject ISbsConfirmService ConfirmService
+@inject ISbsLocalizer Loc
+
+<SbsModal Visible="_visible"
+          VisibleChanged="OnVisibleChanged"
+          Title="@_title"
+          Icon="@_icon"
+          Size="sm"
+          CssClass="@CssClass"
+          Style="@Style">
+    <ChildContent>
+        <div class="sbs-confirm-body">
+            <div class="sbs-confirm-message">@_message</div>
+            @if (!string.IsNullOrEmpty(_subMessage))
+            {
+                <div class="sbs-confirm-submessage">
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <span>@_subMessage</span>
+                </div>
+            }
+        </div>
+    </ChildContent>
+    <FooterContent>
+        <SbsButton Text="@(_cancelText ?? Loc[SbsLocalizerKeys.Cancel])"
+                   Variant="ghost"
+                   OnClick="() => Close(false)" />
+        <SbsButton Text="@(_confirmText ?? Loc[SbsLocalizerKeys.Ok])"
+                   Variant="@_confirmVariant"
+                   OnClick="() => Close(true)" />
+    </FooterContent>
+</SbsModal>
+
+@code {
+    private bool _visible;
+    private string _title = string.Empty;
+    private string _message = string.Empty;
+    private string? _subMessage;
+    private string _icon = "fa fa-question-circle";
+    private string? _confirmText;
+    private string? _cancelText;
+    private string _confirmVariant = "primary";
+
+    protected override void OnInitialized()
+    {
+        _title = Loc[SbsLocalizerKeys.ConfirmTitle];
+        ConfirmService.OnShow += HandleShow;
+    }
+
+    private void HandleShow(SbsConfirmOptions options)
+    {
+        _message = options.Message;
+        _title = string.IsNullOrWhiteSpace(options.Title) ? Loc[SbsLocalizerKeys.ConfirmTitle] : options.Title;
+        _icon = string.IsNullOrWhiteSpace(options.Icon) ? "fa fa-question-circle" : options.Icon;
+        _subMessage = options.SubMessage;
+        _confirmText = options.ConfirmText;
+        _cancelText = options.CancelText;
+        _confirmVariant = string.IsNullOrWhiteSpace(options.ConfirmVariant) ? "primary" : options.ConfirmVariant;
+        _visible = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnVisibleChanged(bool v)
+    {
+        if (!v && _visible)
+            Close(false);
+    }
+
+    private void Close(bool result)
+    {
+        _visible = false;
+        ConfirmService.Resolve(result);
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ConfirmService.OnShow -= HandleShow;
+    }
+}

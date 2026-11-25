@@ -1,0 +1,100 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@implements IDisposable
+@inject ISbsToastService Toaster
+@inject ISbsLocalizer Loc
+
+@foreach (var group in _toasts.GroupBy(t => t.Position))
+{
+    var posClass = group.Key switch
+    {
+        SbsToastPosition.TopRight     => "sbs-tc-tr",
+        SbsToastPosition.TopLeft      => "sbs-tc-tl",
+        SbsToastPosition.TopCenter    => "sbs-tc-tc",
+        SbsToastPosition.BottomRight  => "sbs-tc-br",
+        SbsToastPosition.BottomLeft   => "sbs-tc-bl",
+        SbsToastPosition.BottomCenter => "sbs-tc-bc",
+        _ => "sbs-tc-tr"
+    };
+    var animClass = group.Key switch
+    {
+        SbsToastPosition.TopRight or SbsToastPosition.BottomRight => "sbs-anim-from-right",
+        SbsToastPosition.TopLeft or SbsToastPosition.BottomLeft   => "sbs-anim-from-left",
+        SbsToastPosition.TopCenter                                => "sbs-anim-from-top",
+        SbsToastPosition.BottomCenter                             => "sbs-anim-from-bottom",
+        _ => "sbs-anim-from-right"
+    };
+
+    <div class="@BuildClass(CreateCssBuilder("sbs-toast-container").AddClass(posClass))"
+         style="@BuildStyle()"
+         @attributes="UserAttributes">
+        @foreach (var t in group)
+        {
+            var icon = t.Type switch
+            {
+                SbsToastType.Success => "fa fa-circle-check",
+                SbsToastType.Error   => "fa fa-circle-xmark",
+                SbsToastType.Warning => "fa fa-triangle-exclamation",
+                SbsToastType.Info    => "fa fa-circle-info",
+                _ => "fa fa-bell"
+            };
+            var typeClass = t.Type switch
+            {
+                SbsToastType.Success => "sbs-toast-success",
+                SbsToastType.Error   => "sbs-toast-error",
+                SbsToastType.Warning => "sbs-toast-warning",
+                SbsToastType.Info    => "sbs-toast-info",
+                _ => string.Empty
+            };
+            var title = !string.IsNullOrWhiteSpace(t.Title)
+                ? t.Title
+                : t.Type switch
+                {
+                    SbsToastType.Success => Loc[SbsLocalizerKeys.ToastSuccess],
+                    SbsToastType.Error   => Loc[SbsLocalizerKeys.ToastError],
+                    SbsToastType.Warning => Loc[SbsLocalizerKeys.ToastWarning],
+                    SbsToastType.Info    => Loc[SbsLocalizerKeys.ToastInfo],
+                    _ => Loc[SbsLocalizerKeys.ToastNotification]
+                };
+
+            <div class="sbs-toast @typeClass @animClass" role="alert" @key="t.Id">
+                <div class="sbs-toast-header">
+                    <div class="sbs-toast-icon"><i class="@icon"></i></div>
+                    <strong class="sbs-toast-title">@title</strong>
+                    <small class="sbs-toast-time">@t.CreatedAt.ToString("g")</small>
+                    @if (t.ShowCloseButton)
+                    {
+                        <button type="button"
+                                class="sbs-toast-close"
+                                @onclick="@(() => Toaster.Dismiss(t.Id))"
+                                title="@Loc[SbsLocalizerKeys.Close]">
+                            <i class="fa fa-times"></i>
+                        </button>
+                    }
+                </div>
+                <div class="sbs-toast-body">@t.Message</div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private IReadOnlyList<SbsToastMessage> _toasts = Array.Empty<SbsToastMessage>();
+
+    protected override void OnInitialized()
+    {
+        _toasts = Toaster.Toasts;
+        Toaster.OnToastsChanged += HandleChanged;
+    }
+
+    private void HandleChanged()
+    {
+        _toasts = Toaster.Toasts;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Toaster.OnToastsChanged -= HandleChanged;
+    }
+}

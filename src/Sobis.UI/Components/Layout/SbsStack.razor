@@ -1,0 +1,53 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<div class="@RootClass" style="@RootStyle" @attributes="UserAttributes">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>Flex layout direction (Row, Column, RowReverse, ColumnReverse).</summary>
+    [Parameter] public SbsDirection Direction { get; set; } = SbsDirection.Row;
+
+    /// <summary>Gap between flex children.</summary>
+    [Parameter] public SbsSpacing Gap { get; set; } = SbsSpacing.Sm;
+
+    /// <summary>Cross-axis alignment (align-items).</summary>
+    [Parameter] public SbsAlign? Align { get; set; }
+
+    /// <summary>Main-axis alignment (justify-content).</summary>
+    [Parameter] public SbsJustify? Justify { get; set; }
+
+    /// <summary>Whether flex children wrap onto multiple lines.</summary>
+    [Parameter] public bool Wrap { get; set; }
+
+    /// <summary>Stretches the stack to 100% width.</summary>
+    [Parameter] public bool FullWidth { get; set; }
+
+    /// <summary>Allows the stack to grow and fill remaining flex space (flex: 1 1 auto; min-height: 0).</summary>
+    [Parameter] public bool Grow { get; set; }
+
+    /// <summary>Renders as inline-flex instead of block flex.</summary>
+    [Parameter] public bool Inline { get; set; }
+
+    /// <summary>Optional inner padding.</summary>
+    [Parameter] public SbsSpacing Padding { get; set; } = SbsSpacing.None;
+
+    /// <summary>Child content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-stack")
+            .AddClass("sbs-stack-inline", Inline)
+            .AddClass("sbs-stack-wrap", Wrap)
+            .AddClass("sbs-stack-full", FullWidth)
+            .AddClass("sbs-stack-grow", Grow));
+
+    private string? RootStyle => BuildStyle(
+        CreateStyleBuilder()
+            .AddStyle("flex-direction", Direction.ToCss(), Direction != SbsDirection.Row)
+            .AddStyle("gap", Gap.ToCssVar())
+            .AddStyle("align-items", Align?.ToCss(), Align.HasValue)
+            .AddStyle("justify-content", Justify?.ToCss(), Justify.HasValue)
+            .AddStyle("padding", Padding.ToCssVar(), Padding != SbsSpacing.None));
+}

@@ -1,0 +1,87 @@
+@page "/overlays"
+@inject ISbsToastService Toast
+@inject ISbsConfirmService Confirm
+@inject ISbsDialogService Dialog
+
+<PageTitle>Sobis.UI — Pencereler & Bildirim</PageTitle>
+
+<SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Md">
+    <DemoSection Title="Modal, DialogService, Confirm, Toast & Loading"
+                 Subtitle="Programatik bildirim/onay/dialog servisleri ve yerel yükleme katmanı"
+                 Icon="fa fa-window-restore"
+                 RazorCode="@OverlaysRazor"
+                 CSharpCode="@OverlaysCSharp">
+        <DemoContent>
+            <SbsStack Direction="SbsDirection.Row" Wrap="true" Gap="SbsSpacing.Sm">
+                <SbsButton Text="SbsModal Aç" Icon="fa fa-window-maximize" Variant="primary" OnClick="@(() => _modalOpen = true)" />
+                <SbsButton Text="DialogService Aç" Icon="fa fa-window-restore" Variant="save" OnClick="OpenDialogAsync" />
+                <SbsButton Text="Onay İste (Confirm)" Icon="fa fa-circle-question" Variant="warning" OnClick="OpenConfirmAsync" />
+                <SbsButton Text="Başarılı Toast" Icon="fa fa-check" Variant="save" OnClick="@(() => Toast.Success("İşlem başarıyla tamamlandı."))" />
+                <SbsButton Text="Uyarı Toast" Icon="fa fa-triangle-exclamation" Variant="warning" OnClick="@(() => Toast.Warning("Lütfen zorunlu alanları kontrol edin."))" />
+                <SbsButton Text="Hata Toast" Icon="fa fa-circle-xmark" Variant="danger" OnClick="@(() => Toast.Error("Örnek hata bildirimi."))" />
+                <SbsButton Text="Loading Göster" Icon="fa fa-spinner" Variant="secondary" OnClick="TriggerLoadingAsync" />
+            </SbsStack>
+
+            <SbsLoading Visible="_busy">
+                <SbsCard Outlined="true" Padding="SbsSpacing.Md">
+                    <SbsText Variant="SbsTextVariant.Muted">@(_status ?? "Yukarıdaki butonlarla canlı pencere ve bildirimleri test edebilirsiniz.")</SbsText>
+                </SbsCard>
+            </SbsLoading>
+        </DemoContent>
+    </DemoSection>
+</SbsStack>
+
+<SbsModal @bind-Visible="_modalOpen" Title="Örnek SbsModal" Icon="fa fa-window-maximize" ModalSize="SbsModalSize.Md">
+    <ChildContent>
+        <SbsText Variant="SbsTextVariant.Body">SbsModal sabit başlıklı, temaya uyumlu genel amaçlı pencere bileşenidir.</SbsText>
+    </ChildContent>
+    <FooterContent>
+        <SbsButton Text="Kapat" Variant="ghost" OnClick="@(() => _modalOpen = false)" />
+        <SbsButton Text="Tamam" Icon="fa fa-check" Variant="primary" OnClick="@(() => _modalOpen = false)" />
+    </FooterContent>
+</SbsModal>
+
+@code {
+    private bool _modalOpen;
+    private bool _busy;
+    private string? _status;
+
+    private async Task OpenConfirmAsync()
+    {
+        var ok = await Confirm.ShowAsync("Seçili kaydı silmek istediğinize emin misiniz?", "Silme Onayı");
+        _status = ok ? "Kullanıcı onayladı (true)." : "Kullanıcı iptal etti (false).";
+    }
+
+    private async Task OpenDialogAsync()
+    {
+        var parameters = new SbsDialogParameters().Add("Message", "ISbsDialogService ile açıldı!");
+        var instance = await Dialog.ShowAsync<SampleDialog>("Dinamik Dialog", parameters);
+        var res = await instance.Result;
+        _status = res.Canceled ? "Dialog iptal edildi." : $"Dialog sonucu: {res.Data}";
+    }
+
+    private async Task TriggerLoadingAsync()
+    {
+        _busy = true;
+        await Task.Delay(1200);
+        _busy = false;
+    }
+
+    private const string OverlaysRazor = """
+        <SbsModal @bind-Visible="_modalOpen" Title="Örnek Pencere" ModalSize="SbsModalSize.Md">
+            <ChildContent>İçerik</ChildContent>
+            <FooterContent>
+                <SbsButton Text="Kapat" Variant="ghost" OnClick="@(() => _modalOpen = false)" />
+            </FooterContent>
+        </SbsModal>
+        """;
+
+    private const string OverlaysCSharp = """
+        [Inject] private ISbsToastService Toast { get; set; } = default!;
+        [Inject] private ISbsConfirmService Confirm { get; set; } = default!;
+        [Inject] private ISbsDialogService Dialog { get; set; } = default!;
+
+        var ok = await Confirm.ShowAsync("Silmek istiyor musunuz?", "Onay");
+        if (ok) Toast.Success("Silindi.");
+        """;
+}

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sobis.UI — Blazor Bileşen Kütüphanesi | Sobis Bilgi Teknolojileri Sistemleri</title>
+    <base href="/" />
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('sobis-theme') === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                }
+            } catch (e) { }
+        })();
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="_content/Sobis.UI/css/sobis-ui.css" />
+    <link rel="stylesheet" href="Sobis.UI.Docs.styles.css" />
+    <style>
+        html, body, #app { height: 100%; margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+    <main id="app">
+        <p style="padding:24px;font-family:Inter,system-ui,sans-serif;color:#94a3b8;">Sobis.UI yükleniyor...</p>
+    </main>
+    <script src="_content/Sobis.UI/js/sobis-ui.js"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
+</body>
+</html>

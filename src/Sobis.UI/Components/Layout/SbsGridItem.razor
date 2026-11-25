@@ -1,0 +1,61 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<div class="@RootClass" style="@RootStyle" @attributes="UserAttributes">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>Number of grid columns this item spans on desktop viewports.</summary>
+    [Parameter] public int? ColSpan { get; set; }
+
+    /// <summary>Number of grid rows this item spans.</summary>
+    [Parameter] public int? RowSpan { get; set; }
+
+    /// <summary>Optional starting grid column line (1-based).</summary>
+    [Parameter] public int? ColStart { get; set; }
+
+    /// <summary>Responsive column span at medium viewports (&lt;= 992px).</summary>
+    [Parameter] public int? Md { get; set; }
+
+    /// <summary>Responsive column span at small viewports (&lt;= 768px).</summary>
+    [Parameter] public int? Sm { get; set; }
+
+    /// <summary>Turns the grid cell into a full-height vertical flex container.</summary>
+    [Parameter] public bool FillHeight { get; set; }
+
+    /// <summary>Grid item content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-grid-item")
+            .AddClass("sbs-grid-item-md", Md.HasValue)
+            .AddClass("sbs-grid-item-sm", Sm.HasValue)
+            .AddClass("sbs-grid-item-fill", FillHeight));
+
+    private string? RootStyle
+    {
+        get
+        {
+            var sb = CreateStyleBuilder();
+
+            if (ColStart is > 0 && ColSpan is > 0)
+                sb.AddStyle("--sbs-gi-col", $"{ColStart.Value} / span {ColSpan.Value}");
+            else if (ColSpan is > 0)
+                sb.AddStyle("--sbs-gi-col", $"span {ColSpan.Value}");
+            else if (ColStart is > 0)
+                sb.AddStyle("--sbs-gi-col", $"{ColStart.Value}");
+
+            if (RowSpan is > 0)
+                sb.AddStyle("grid-row", $"span {RowSpan.Value}");
+
+            if (Md is > 0)
+                sb.AddStyle("--sbs-gi-md", $"span {Md.Value}");
+
+            if (Sm is > 0)
+                sb.AddStyle("--sbs-gi-sm", $"span {Sm.Value}");
+
+            return BuildStyle(sb);
+        }
+    }
+}

@@ -1,0 +1,61 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<CascadingValue Value="this" IsFixed="true">
+    <div class="@RootClass" style="@RootStyle" @attributes="UserAttributes">
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    /// <summary>When false (default), expanding one panel automatically collapses all sibling panels.</summary>
+    [Parameter] public bool MultiExpansion { get; set; }
+
+    /// <summary>Renders panels with outer borders. Defaults to true.</summary>
+    [Parameter] public bool Outlined { get; set; } = true;
+
+    /// <summary>Compact header and body padding.</summary>
+    [Parameter] public bool Dense { get; set; }
+
+    /// <summary>Vertical spacing between expansion panels.</summary>
+    [Parameter] public SbsSpacing Gap { get; set; } = SbsSpacing.Xs;
+
+    /// <summary>One or more SbsExpansionPanel children.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private readonly List<SbsExpansionPanel> _panels = new();
+
+    internal void RegisterPanel(SbsExpansionPanel panel)
+    {
+        if (!_panels.Contains(panel))
+            _panels.Add(panel);
+    }
+
+    internal void UnregisterPanel(SbsExpansionPanel panel)
+    {
+        _panels.Remove(panel);
+    }
+
+    internal async Task NotifyExpandedAsync(SbsExpansionPanel expandedPanel)
+    {
+        if (MultiExpansion)
+            return;
+
+        foreach (var panel in _panels)
+        {
+            if (!ReferenceEquals(panel, expandedPanel) && panel.Expanded)
+            {
+                await panel.CollapseFromAccordionAsync();
+            }
+        }
+    }
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-accordion")
+            .AddClass("sbs-accordion-outlined", Outlined)
+            .AddClass("sbs-accordion-dense", Dense));
+
+    private string? RootStyle => BuildStyle(
+        CreateStyleBuilder()
+            .AddStyle("gap", Gap.ToCssVar()));
+}

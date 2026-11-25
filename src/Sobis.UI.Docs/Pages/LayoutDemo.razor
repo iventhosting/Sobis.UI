@@ -1,0 +1,100 @@
+@page "/layout"
+
+<PageTitle>Sobis.UI — Yerleşim & Form</PageTitle>
+
+<SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Md">
+    <DemoSection Title="SbsFormLayout & SbsFormGroup"
+                 Subtitle="SbsFormContext ile Disabled, ReadOnly ve LabelPosition tüm alt alanlara otomatik yayılır"
+                 Icon="fa fa-sliders"
+                 RazorCode="@FormRazor"
+                 ApiParams="@FormApi">
+        <HeaderActions>
+            <SbsStack Direction="SbsDirection.Row" Gap="SbsSpacing.Md" Align="SbsAlign.Center">
+                <SbsSwitch @bind-Checked="_disabled" Label="Devre Dışı" Color="SbsColor.Warning" />
+                <SbsSwitch @bind-Checked="_readOnly" Label="Salt Okunur" Color="SbsColor.Info" />
+                <SbsRadioGroup TValue="SbsLabelPosition" Data="_labelPositions" @bind-Value="_labelPos" />
+            </SbsStack>
+        </HeaderActions>
+        <DemoContent>
+            <SbsFormLayout Columns="2" Disabled="_disabled" ReadOnly="_readOnly" LabelPosition="_labelPos" LabelWidth="140px">
+                <SbsField Label="Kurum Adı" Required="true" HelpText="SbsFormContext ile otomatik hizalanır">
+                    <SbsTextBox @bind-Value="_orgName" />
+                </SbsField>
+                <SbsField Label="Kurum Kodu">
+                    <SbsTextBox @bind-Value="_orgCode" />
+                </SbsField>
+                <SbsField Label="Açıklama" ColSpan="2" ErrorText="@(string.IsNullOrWhiteSpace(_notes) ? "Açıklama boş bırakılamaz" : null)">
+                    <SbsTextArea @bind-Value="_notes" Rows="2" />
+                </SbsField>
+            </SbsFormLayout>
+        </DemoContent>
+    </DemoSection>
+
+    <DemoSection Title="SbsGridLayout, SbsGridItem & Daraltılabilir SbsFormGroup"
+                 Subtitle="Bootstrap row/col olmadan 12 sütunlu ve özel oranlı (1fr 2fr) duyarlı yerleşim"
+                 Icon="fa fa-grip"
+                 RazorCode="@GridRazor">
+        <DemoContent>
+            <SbsGridLayout Columns="1fr 2fr" Gap="SbsSpacing.Sm">
+                <SbsFormGroup Caption="Daraltılabilir Grup" Icon="fa fa-compress" Collapsible="true" @bind-Collapsed="_collapsed">
+                    <SbsText Variant="SbsTextVariant.Muted">Başlığa tıklayarak grubu açıp kapatabilirsiniz.</SbsText>
+                </SbsFormGroup>
+
+                <SbsGridLayout ColumnCount="12" Gap="SbsSpacing.Sm">
+                    <SbsGridItem ColSpan="4">
+                        <SbsCard Title="4 Sütun" Outlined="true" Padding="SbsSpacing.Sm">
+                            <SbsText Variant="SbsTextVariant.Caption">Özet paneli</SbsText>
+                        </SbsCard>
+                    </SbsGridItem>
+                    <SbsGridItem ColSpan="8">
+                        <SbsCard Title="8 Sütun" Outlined="true" Padding="SbsSpacing.Sm">
+                            <SbsText Variant="SbsTextVariant.Caption">Detay paneli</SbsText>
+                        </SbsCard>
+                    </SbsGridItem>
+                </SbsGridLayout>
+            </SbsGridLayout>
+        </DemoContent>
+    </DemoSection>
+</SbsStack>
+
+@code {
+    private bool _disabled;
+    private bool _readOnly;
+    private bool _collapsed;
+    private SbsLabelPosition _labelPos = SbsLabelPosition.Left;
+    private readonly List<SbsLabelPosition> _labelPositions = [SbsLabelPosition.Left, SbsLabelPosition.Top];
+    private string? _orgName = "Sobis Bilgi Teknolojileri Sistemleri";
+    private string? _orgCode = "SBS-001";
+    private string? _notes = "Sıfır div, sıfır Bootstrap kurumsal Blazor UI kütüphanesi.";
+
+    private static readonly IReadOnlyList<ApiParamRow> FormApi =
+    [
+        new("Columns", "int", "1", "Form içindeki sütun sayısı (1, 2, 3...)."),
+        new("LabelPosition", "SbsLabelPosition", "Left", "Etiket konumu: Left, Top veya Hidden."),
+        new("LabelWidth", "string?", "145px", "Left modunda etiket genişliği."),
+        new("Disabled / ReadOnly", "bool", "false", "Tüm alt SbsInputBase bileşenlerine otomatik yayılır.")
+    ];
+
+    private const string FormRazor = """
+        <SbsFormLayout Columns="2" Disabled="_disabled" ReadOnly="_readOnly"
+                       LabelPosition="_labelPos" LabelWidth="140px">
+            <SbsField Label="Kurum Adı" Required="true" HelpText="SbsFormContext ile hizalanır">
+                <SbsTextBox @bind-Value="_orgName" />
+            </SbsField>
+            <SbsField Label="Kurum Kodu"><SbsTextBox @bind-Value="_orgCode" /></SbsField>
+            <SbsField Label="Açıklama" ColSpan="2"><SbsTextArea @bind-Value="_notes" Rows="2" /></SbsField>
+        </SbsFormLayout>
+        """;
+
+    private const string GridRazor = """
+        <SbsGridLayout Columns="1fr 2fr" Gap="SbsSpacing.Sm">
+            <SbsFormGroup Caption="Daraltılabilir Grup" Collapsible="true" @bind-Collapsed="_collapsed">
+                <SbsText Variant="SbsTextVariant.Muted">İçerik</SbsText>
+            </SbsFormGroup>
+            <SbsGridLayout ColumnCount="12" Gap="SbsSpacing.Sm">
+                <SbsGridItem ColSpan="4"><SbsCard Title="4 Sütun" Outlined="true" /></SbsGridItem>
+                <SbsGridItem ColSpan="8"><SbsCard Title="8 Sütun" Outlined="true" /></SbsGridItem>
+            </SbsGridLayout>
+        </SbsGridLayout>
+        """;
+}

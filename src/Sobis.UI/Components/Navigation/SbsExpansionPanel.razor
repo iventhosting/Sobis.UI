@@ -1,0 +1,113 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@implements IDisposable
+
+<div class="@RootClass" style="@RootStyle" @attributes="UserAttributes">
+    <button type="button"
+            class="sbs-exp-header"
+            disabled="@Disabled"
+            aria-expanded="@Expanded.ToString().ToLowerInvariant()"
+            @onclick="ToggleAsync">
+        <span class="sbs-exp-header-main">
+            @if (!string.IsNullOrWhiteSpace(Icon))
+            {
+                <i class="@Icon sbs-exp-icon" aria-hidden="true"></i>
+            }
+            <span class="sbs-exp-titles">
+                <span class="sbs-exp-title">@Title</span>
+                @if (!string.IsNullOrWhiteSpace(Subtitle))
+                {
+                    <span class="sbs-exp-subtitle">@Subtitle</span>
+                }
+            </span>
+        </span>
+        @if (HeaderContent is not null)
+        {
+            <span class="sbs-exp-extra" @onclick:stopPropagation="true">
+                @HeaderContent
+            </span>
+        }
+        <i class="fa-solid fa-chevron-down sbs-exp-chevron @(Expanded ? "sbs-exp-chevron-open" : "")" aria-hidden="true"></i>
+    </button>
+
+    @if (Expanded || KeepAlive)
+    {
+        <div class="sbs-exp-body @(Expanded ? "" : "sbs-exp-body-hidden")" hidden="@(!Expanded)">
+            @ChildContent
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>Panel heading text.</summary>
+    [Parameter] public string Title { get; set; } = "";
+
+    /// <summary>Optional muted secondary line beneath Title.</summary>
+    [Parameter] public string? Subtitle { get; set; }
+
+    /// <summary>Optional leading icon CSS class.</summary>
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>Expanded state of the panel.</summary>
+    [Parameter] public bool Expanded { get; set; }
+
+    /// <summary>Two-way binding callback for Expanded.</summary>
+    [Parameter] public EventCallback<bool> ExpandedChanged { get; set; }
+
+    /// <summary>Disables expanding/collapsing the panel.</summary>
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>Keeps body content mounted when collapsed. Defaults to true.</summary>
+    [Parameter] public bool KeepAlive { get; set; } = true;
+
+    /// <summary>Optional custom content rendered on the right side of the header.</summary>
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+
+    /// <summary>Panel body content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [CascadingParameter] private SbsAccordion? ParentAccordion { get; set; }
+
+    protected override void OnInitialized()
+    {
+        ParentAccordion?.RegisterPanel(this);
+    }
+
+    public void Dispose()
+    {
+        ParentAccordion?.UnregisterPanel(this);
+    }
+
+    private async Task ToggleAsync()
+    {
+        if (Disabled)
+            return;
+
+        Expanded = !Expanded;
+        await ExpandedChanged.InvokeAsync(Expanded);
+
+        if (Expanded && ParentAccordion is not null)
+        {
+            await ParentAccordion.NotifyExpandedAsync(this);
+        }
+    }
+
+    internal async Task CollapseFromAccordionAsync()
+    {
+        if (!Expanded)
+            return;
+
+        Expanded = false;
+        await ExpandedChanged.InvokeAsync(false);
+        StateHasChanged();
+    }
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-exp-panel")
+            .AddClass("sbs-exp-panel-open", Expanded)
+            .AddClass("sbs-exp-panel-disabled", Disabled)
+            .AddClass("sbs-exp-panel-dense", ParentAccordion?.Dense ?? false)
+            .AddClass("sbs-exp-panel-outlined", ParentAccordion?.Outlined ?? true));
+
+    private string? RootStyle => BuildStyle();
+}

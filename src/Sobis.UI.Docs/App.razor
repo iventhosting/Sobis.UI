@@ -1,0 +1,19 @@
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <SbsEmptyState Icon="fa-solid fa-compass"
+                           Title="Sayfa Bulunamadı"
+                           Description="Aradığınız bileşen dokümantasyonu bulunamadı.">
+                <ActionContent>
+                    <SbsButton Text="Kurulum Sayfasına Dön" Icon="fa fa-home" Variant="primary" OnClick="@(() => Nav.NavigateTo(""))" />
+                </ActionContent>
+            </SbsEmptyState>
+        </LayoutView>
+    </NotFound>
+</Router>
+
+@inject NavigationManager Nav

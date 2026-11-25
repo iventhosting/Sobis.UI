@@ -1,0 +1,695 @@
+@namespace Sobis.UI
+@typeparam TItem
+@inherits SbsComponentBase
+@using System.Globalization
+@using System.Net
+@using System.Reflection
+@using System.Text
+@inject IJSRuntime JSRuntime
+@inject ISbsAuthorizationProvider GridAuthService
+@inject ISbsLocalizer Loc
+
+@if (ChildContent is not null || ColumnDefinitions is not null)
+{
+    <CascadingValue Value="this" IsFixed="true">
+        @ColumnDefinitions
+        @ChildContent
+    </CascadingValue>
+}
+
+<div class="@RootClass" style="@BuildStyle()" @attributes="UserAttributes">
+    @if (ShowToolbar)
+    {
+        <div class="sbs-grid-toolbar">
+            @if (!string.IsNullOrEmpty(Title))
+            {
+                <div class="sbs-grid-toolbar-title">
+                    <i class="@(string.IsNullOrEmpty(TitleIcon) ? "fa fa-list" : TitleIcon)"></i>
+                    <span>@Title</span>
+                </div>
+            }
+
+            <div class="sbs-grid-toolbar-count">@Loc[SbsLocalizerKeys.RecordCount, ItemCount]</div>
+
+            @if (ShowExportButton)
+            {
+                <div class="sbs-grid-exports">
+                    <SbsButton Text="Excel"
+                               Icon="fa fa-file-excel"
+                               Variant="success"
+                               Size="sm"
+                               OnClick="ExportExcelAsync"
+                               title="@Loc[SbsLocalizerKeys.ExportExcel]" />
+                    <SbsButton Text="PDF"
+                               Icon="fa fa-file-pdf"
+                               Variant="danger"
+                               Size="sm"
+                               OnClick="ExportPdfAsync"
+                               title="@Loc[SbsLocalizerKeys.ExportPdf]" />
+                </div>
+            }
+
+            @if (ShowSearchBox)
+            {
+                <div class="sbs-grid-search">
+                    <i class="fa fa-search"></i>
+                    <input type="text"
+                           placeholder="@EffectiveSearchPlaceholder"
+                           value="@_searchText"
+                           @oninput="OnSearchInput" />
+                </div>
+            }
+        </div>
+    }
+
+    <div class="sbs-grid-scroll">
+        <table class="sbs-grid">
+            <thead>
+                <tr>
+                    @foreach (var col in ActiveColumns)
+                    {
+                        <th style="@GetColumnStyle(col)"
+                            class="@(col.AllowSort && !string.IsNullOrEmpty(col.Field) ? "sbs-grid-sortable" : "")"
+                            @onclick="@(() => ToggleSort(col))">
+                            @if (col.HeaderTemplate is not null)
+                            {
+                                @col.HeaderTemplate
+                            }
+                            else
+                            {
+                                @col.Caption
+                            }
+                            @if (_sortField == col.Field && !string.IsNullOrEmpty(col.Field))
+                            {
+                                <i class="fa @(_sortDesc ? "fa-caret-down" : "fa-caret-up") sbs-grid-sort-ico"></i>
+                            }
+                        </th>
+                    }
+                    @if (ShowStatusAction)
+                    {
+                        <th class="no-print sbs-grid-action-col">@Loc[SbsLocalizerKeys.Status]</th>
+                    }
+                    @if (EditActionVisible)
+                    {
+                        <th class="no-print sbs-grid-action-col">@Loc[SbsLocalizerKeys.Edit]</th>
+                    }
+                    @if (RowActions is not null)
+                    {
+                        <th class="no-print sbs-grid-action-col">@RowActionsCaption</th>
+                    }
+                    @if (DeleteActionVisible)
+                    {
+                        <th class="no-print sbs-grid-action-col">@Loc[SbsLocalizerKeys.Delete]</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @if (_visibleRows.Count == 0)
+                {
+                    <tr>
+                        <td colspan="@TotalColumnCount" class="sbs-grid-empty">
+                            <i class="fa fa-inbox"></i>
+                            <span>@EffectiveEmptyText</span>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in _pageRows)
+                    {
+                        var rowItem = item;
+                        var selected = SelectedItem is not null && rowItem!.Equals(SelectedItem);
+                        <tr class="@(selected ? "sbs-grid-row-selected" : "") @(RowCssClass?.Invoke(rowItem) ?? "")"
+                            @onclick="@(() => OnRowClick(rowItem))"
+                            @ondblclick="@(() => OnRowDoubleClickInternal(rowItem))">
+                            @foreach (var col in ActiveColumns)
+                            {
+                                <td @onclick:stopPropagation="col.StopRowClick"
+                                    style="@GetColumnStyle(col)">
+                                    @if (col.EffectiveTemplate is not null)
+                                    {
+                                        @col.EffectiveTemplate(rowItem)
+                                    }
+                                    else if (col.ValueGetter is not null)
+                                    {
+                                        @col.ValueGetter(rowItem)
+                                    }
+                                    else if (!string.IsNullOrEmpty(col.Field))
+                                    {
+                                        @GetValue(rowItem, col.Field)
+                                    }
+                                </td>
+                            }
+                            @if (ShowStatusAction)
+                            {
+                                <td class="no-print sbs-grid-action-col">
+                                    @{
+                                        var stat = GetValue(rowItem, "Status")?.ToString() ?? "E";
+                                        var isActive = stat == "E";
+                                    }
+                                    <i class="fa @(isActive ? "fa-circle-check sbs-grid-status-active" : "fa-circle-xmark sbs-grid-status-passive")"></i>
+                                </td>
+                            }
+                            @if (EditActionVisible)
+                            {
+                                <td class="no-print sbs-grid-action-col">
+                                    <SbsButton Bare="true"
+                                               CssClass="sbs-icon-btn sbs-icon-info"
+                                               Icon="fa fa-pen-to-square"
+                                               StopPropagation="true"
+                                               title="@Loc[SbsLocalizerKeys.Edit]"
+                                               OnClick="@(async () => { if (OnEditClick.HasDelegate) await OnEditClick.InvokeAsync(rowItem); })" />
+                                </td>
+                            }
+                            @if (RowActions is not null)
+                            {
+                                <td class="no-print sbs-grid-action-col">
+                                    @RowActions(rowItem)
+                                </td>
+                            }
+                            @if (DeleteActionVisible)
+                            {
+                                <td class="no-print sbs-grid-action-col">
+                                    <SbsButton Bare="true"
+                                               CssClass="sbs-icon-btn sbs-icon-danger"
+                                               Icon="fa fa-trash"
+                                               StopPropagation="true"
+                                               title="@Loc[SbsLocalizerKeys.Delete]"
+                                               OnClick="@(async () => { if (OnDeleteClick.HasDelegate) await OnDeleteClick.InvokeAsync(rowItem); })" />
+                                </td>
+                            }
+                        </tr>
+                    }
+                }
+            </tbody>
+            @if (ShowFooterRow)
+            {
+                <tfoot>
+                    <tr>
+                        @foreach (var col in ActiveColumns)
+                        {
+                            <td style="@GetColumnStyle(col)">@FormatFooterCell(col)</td>
+                        }
+                        @if (ShowStatusAction)
+                        {
+                            <td class="no-print sbs-grid-action-col"></td>
+                        }
+                        @if (EditActionVisible)
+                        {
+                            <td class="no-print sbs-grid-action-col"></td>
+                        }
+                        @if (RowActions is not null)
+                        {
+                            <td class="no-print sbs-grid-action-col"></td>
+                        }
+                        @if (DeleteActionVisible)
+                        {
+                            <td class="no-print sbs-grid-action-col"></td>
+                        }
+                    </tr>
+                </tfoot>
+            }
+        </table>
+    </div>
+
+    @if (PagerVisible && (ItemCount > PageSize || (HasNextPage.HasValue && (CurrentPage > 1 || HasNextPage.Value))))
+    {
+        <div class="sbs-grid-pager">
+            <span>
+                @if (HasNextPage.HasValue)
+                {
+                    @(_currentPage * PageSize + (_pageRows.Count == 0 ? 0 : 1))<text> - @(_currentPage * PageSize + _pageRows.Count)</text>
+                }
+                else
+                {
+                    <text>@(_currentPage * PageSize + 1) - @(Math.Min((_currentPage + 1) * PageSize, ItemCount)) / @ItemCount</text>
+                }
+            </span>
+            <div class="sbs-grid-pager-btns">
+                <SbsButton Icon="fa fa-angle-double-left"
+                           Variant="ghost"
+                           Size="sm"
+                           CssClass="sbs-grid-pager-btn"
+                           OnClick="() => GoPage(0)"
+                           Disabled="@(_currentPage == 0)"
+                           title="@Loc[SbsLocalizerKeys.First]" />
+                <SbsButton Icon="fa fa-angle-left"
+                           Variant="ghost"
+                           Size="sm"
+                           CssClass="sbs-grid-pager-btn"
+                           OnClick="() => GoPage(_currentPage - 1)"
+                           Disabled="@(_currentPage == 0)"
+                           title="@Loc[SbsLocalizerKeys.Previous]" />
+                <span>@Loc[SbsLocalizerKeys.Page] @(_currentPage + 1)@(!HasNextPage.HasValue ? $" / {TotalPages}" : "")</span>
+                <SbsButton Icon="fa fa-angle-right"
+                           Variant="ghost"
+                           Size="sm"
+                           CssClass="sbs-grid-pager-btn"
+                           OnClick="() => GoPage(_currentPage + 1)"
+                           Disabled="@(HasNextPage.HasValue ? !HasNextPage.Value : _currentPage >= TotalPages - 1)"
+                           title="@Loc[SbsLocalizerKeys.Next]" />
+                @if (!HasNextPage.HasValue)
+                {
+                    <SbsButton Icon="fa fa-angle-double-right"
+                               Variant="ghost"
+                               Size="sm"
+                               CssClass="sbs-grid-pager-btn"
+                               OnClick="() => GoPage(TotalPages - 1)"
+                               Disabled="@(_currentPage >= TotalPages - 1)"
+                               title="@Loc[SbsLocalizerKeys.Last]" />
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public IEnumerable<TItem>? Data { get; set; }
+    [Parameter] public List<SbsGridColumn<TItem>>? Columns { get; set; }
+    [Parameter] public RenderFragment? ColumnDefinitions { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public bool FillHeight { get; set; } = true;
+    [Parameter] public bool ShowToolbar { get; set; } = true;
+    [Parameter] public string Title { get; set; } = "Liste";
+    [Parameter] public string TitleIcon { get; set; } = "fa fa-list";
+    [Parameter] public bool ShowExportButton { get; set; }
+    [Parameter] public bool ShowSearchBox { get; set; } = true;
+    [Parameter] public string? SearchPlaceholder { get; set; }
+    [Parameter] public bool PagerVisible { get; set; } = true;
+    [Parameter] public int PageSize { get; set; } = 20;
+
+    /// <summary>Optional server paging total item count.</summary>
+    [Parameter] public int? TotalItemCount { get; set; }
+
+    /// <summary>Optional server paging indicator when API returns rows without exact total.</summary>
+    [Parameter] public bool? HasNextPage { get; set; }
+
+    [Parameter] public int CurrentPage { get; set; } = 1;
+    [Parameter] public EventCallback<int> CurrentPageChanged { get; set; }
+    [Parameter] public string? SortField { get; set; }
+    [Parameter] public bool SortDescending { get; set; }
+    [Parameter] public EventCallback<SbsGridSort> ServerSortChanged { get; set; }
+    [Parameter] public string? EmptyText { get; set; }
+    [Parameter] public Func<TItem, string>? RowCssClass { get; set; }
+
+    [Parameter] public bool ShowStatusAction { get; set; }
+
+    [Parameter] public TItem? SelectedItem { get; set; }
+    [Parameter] public EventCallback<TItem?> SelectedItemChanged { get; set; }
+    [Parameter] public EventCallback<TItem> OnRowDoubleClick { get; set; }
+
+    [Parameter] public bool ShowEditAction { get; set; }
+    [Parameter] public bool ShowDeleteAction { get; set; }
+    [Parameter] public EventCallback<TItem> OnEditClick { get; set; }
+    [Parameter] public EventCallback<TItem> OnDeleteClick { get; set; }
+    [Parameter] public RenderFragment<TItem>? RowActions { get; set; }
+    [Parameter] public string RowActionsCaption { get; set; } = "İşlemler";
+
+    /// <summary>Required claim code(s) to display the edit column (comma-separated = OR).</summary>
+    [Parameter] public string? EditClaimCode { get; set; }
+
+    /// <summary>Required claim code(s) to display the delete column (comma-separated = OR).</summary>
+    [Parameter] public string? DeleteClaimCode { get; set; }
+
+    private readonly List<SbsGridColumn<TItem>> _declarativeColumns = [];
+    private bool _editClaimOk = true;
+    private bool _deleteClaimOk = true;
+
+    private string _searchText = string.Empty;
+    private string? _sortField;
+    private bool _sortDesc;
+    private int _currentPage;
+
+    private List<TItem> _visibleRows = [];
+    private List<TItem> _pageRows = [];
+
+    private IReadOnlyList<SbsGridColumn<TItem>> ActiveColumns =>
+        Columns is { Count: > 0 } ? Columns : _declarativeColumns;
+
+    private bool EditActionVisible => ShowEditAction && _editClaimOk;
+    private bool DeleteActionVisible => ShowDeleteAction && _deleteClaimOk;
+
+    private int TotalColumnCount => Math.Max(
+        1,
+        ActiveColumns.Count
+        + (ShowStatusAction ? 1 : 0)
+        + (EditActionVisible ? 1 : 0)
+        + (RowActions is not null ? 1 : 0)
+        + (DeleteActionVisible ? 1 : 0));
+
+    private int ItemCount => TotalItemCount ?? _visibleRows.Count;
+    private int TotalPages => Math.Max(1, (int)Math.Ceiling((double)ItemCount / Math.Max(1, PageSize)));
+    private bool IsServerPaged => TotalItemCount.HasValue || HasNextPage.HasValue;
+
+    private bool ShowFooterRow => _visibleRows.Count > 0 && ActiveColumns.Any(HasFooter);
+
+    private string EffectiveSearchPlaceholder => string.IsNullOrEmpty(SearchPlaceholder)
+        ? Loc[SbsLocalizerKeys.SearchPlaceholder]
+        : SearchPlaceholder;
+
+    private string EffectiveEmptyText => string.IsNullOrEmpty(EmptyText)
+        ? Loc[SbsLocalizerKeys.EmptyGrid]
+        : EmptyText;
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-grid-wrap")
+            .AddClass("sbs-grid-fill", FillHeight)
+            .AddClass("sbs-grid-auto", !FillHeight));
+
+    internal void RegisterColumn(SbsGridColumn<TItem> column)
+    {
+        if (!_declarativeColumns.Contains(column))
+        {
+            _declarativeColumns.Add(column);
+            RecomputeRows();
+            StateHasChanged();
+        }
+    }
+
+    internal void UnregisterColumn(SbsGridColumn<TItem> column)
+    {
+        if (_declarativeColumns.Remove(column))
+        {
+            RecomputeRows();
+            StateHasChanged();
+        }
+    }
+
+    internal void NotifyColumnChanged()
+    {
+        StateHasChanged();
+    }
+
+    protected override void OnParametersSet() => RecomputeRows();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _editClaimOk = await ClaimOkAsync(EditClaimCode);
+        _deleteClaimOk = await ClaimOkAsync(DeleteClaimCode);
+    }
+
+    private async Task<bool> ClaimOkAsync(string? claimCode)
+    {
+        if (string.IsNullOrWhiteSpace(claimCode) || GridAuthService is null)
+            return true;
+
+        var codes = claimCode.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return codes.Length > 1
+            ? await GridAuthService.HasAnyClaimAsync(codes)
+            : await GridAuthService.HasClaimAsync(codes[0]);
+    }
+
+    private void RecomputeRows()
+    {
+        var src = Data?.ToList() ?? [];
+        if (IsServerPaged)
+        {
+            _sortField = SortField;
+            _sortDesc = SortDescending;
+        }
+
+        var cols = ActiveColumns;
+        if (!string.IsNullOrEmpty(_searchText) && cols.Count > 0)
+        {
+            var q = _searchText.Trim();
+            src = src.Where(r => cols.Any(c =>
+            {
+                var v = !string.IsNullOrEmpty(c.Field)
+                    ? GetValue(r, c.Field)?.ToString()
+                    : c.ValueGetter?.Invoke(r)?.ToString();
+                return SbsTextHelper.ContainsTr(v, q);
+            })).ToList();
+        }
+
+        if (!IsServerPaged && !string.IsNullOrEmpty(_sortField))
+        {
+            src = (_sortDesc
+                ? src.OrderByDescending(r => GetValue(r, _sortField))
+                : src.OrderBy(r => GetValue(r, _sortField))).ToList();
+        }
+
+        _visibleRows = src;
+        if (IsServerPaged)
+            _currentPage = CurrentPage - 1;
+
+        if (!HasNextPage.HasValue && _currentPage >= TotalPages)
+            _currentPage = TotalPages - 1;
+        if (_currentPage < 0)
+            _currentPage = 0;
+
+        _pageRows = PagerVisible && !IsServerPaged
+            ? _visibleRows.Skip(_currentPage * PageSize).Take(PageSize).ToList()
+            : _visibleRows;
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        _searchText = e.Value?.ToString() ?? string.Empty;
+        _currentPage = 0;
+        RecomputeRows();
+    }
+
+    private async Task ToggleSort(SbsGridColumn<TItem> col)
+    {
+        if (!col.AllowSort || string.IsNullOrEmpty(col.Field))
+            return;
+
+        if (IsServerPaged)
+        {
+            if (ServerSortChanged.HasDelegate)
+                await ServerSortChanged.InvokeAsync(new SbsGridSort(col.Field, _sortField == col.Field ? !_sortDesc : false));
+            return;
+        }
+
+        if (_sortField == col.Field)
+            _sortDesc = !_sortDesc;
+        else
+        {
+            _sortField = col.Field;
+            _sortDesc = false;
+        }
+
+        RecomputeRows();
+    }
+
+    private async Task GoPage(int p)
+    {
+        if (HasNextPage.HasValue)
+        {
+            if (p < 0 || (p > _currentPage && !HasNextPage.Value))
+                return;
+
+            await CurrentPageChanged.InvokeAsync(p + 1);
+            return;
+        }
+
+        if (TotalItemCount.HasValue)
+        {
+            await CurrentPageChanged.InvokeAsync(Math.Clamp(p, 0, TotalPages - 1) + 1);
+            return;
+        }
+
+        _currentPage = Math.Clamp(p, 0, TotalPages - 1);
+        RecomputeRows();
+    }
+
+    private async Task OnRowClick(TItem item)
+    {
+        SelectedItem = item;
+        if (SelectedItemChanged.HasDelegate)
+            await SelectedItemChanged.InvokeAsync(item);
+    }
+
+    private async Task OnRowDoubleClickInternal(TItem item)
+    {
+        if (OnRowDoubleClick.HasDelegate)
+            await OnRowDoubleClick.InvokeAsync(item);
+    }
+
+    private static string GetColumnStyle(SbsGridColumn<TItem> col)
+    {
+        var sb = StyleBuilder.Empty();
+        if (!string.IsNullOrEmpty(col.Width))
+        {
+            sb.AddStyle("width", col.Width)
+              .AddStyle("min-width", col.Width)
+              .AddStyle("white-space", "nowrap");
+        }
+
+        if (!string.IsNullOrEmpty(col.Align))
+            sb.AddStyle("text-align", col.Align);
+
+        return sb.Build() ?? string.Empty;
+    }
+
+    private static bool HasFooter(SbsGridColumn<TItem> col)
+        => !string.IsNullOrEmpty(col.FooterText)
+           || col.FooterAggregate != SbsGridAggregate.None
+           || col.FooterValueGetter is not null;
+
+    private string FormatFooterCell(SbsGridColumn<TItem> col)
+    {
+        object? computed = null;
+        if (col.FooterValueGetter is not null)
+        {
+            computed = col.FooterValueGetter(_visibleRows);
+        }
+        else if (col.FooterAggregate != SbsGridAggregate.None)
+        {
+            computed = ComputeAggregate(col);
+        }
+
+        string formatted;
+        if (computed is null)
+        {
+            formatted = string.Empty;
+        }
+        else if (!string.IsNullOrEmpty(col.FooterFormat) && computed is IFormattable formattable)
+        {
+            formatted = formattable.ToString(col.FooterFormat, CultureInfo.CurrentCulture);
+        }
+        else
+        {
+            formatted = computed.ToString() ?? string.Empty;
+        }
+
+        if (!string.IsNullOrEmpty(col.FooterText) && !string.IsNullOrEmpty(formatted))
+            return $"{col.FooterText} {formatted}";
+
+        return !string.IsNullOrEmpty(formatted) ? formatted : col.FooterText;
+    }
+
+    private object? ComputeAggregate(SbsGridColumn<TItem> col)
+    {
+        if (col.FooterAggregate == SbsGridAggregate.Count)
+            return _visibleRows.Count;
+
+        var numbers = new List<decimal>(_visibleRows.Count);
+        foreach (var row in _visibleRows)
+        {
+            var raw = col.ValueGetter is not null
+                ? col.ValueGetter(row)
+                : (!string.IsNullOrEmpty(col.Field) ? GetValue(row, col.Field) : null);
+
+            if (TryToDecimal(raw, out var dec))
+                numbers.Add(dec);
+        }
+
+        if (numbers.Count == 0)
+            return null;
+
+        return col.FooterAggregate switch
+        {
+            SbsGridAggregate.Sum => numbers.Sum(),
+            SbsGridAggregate.Average => numbers.Average(),
+            SbsGridAggregate.Min => numbers.Min(),
+            SbsGridAggregate.Max => numbers.Max(),
+            _ => null
+        };
+    }
+
+    private static bool TryToDecimal(object? raw, out decimal value)
+    {
+        switch (raw)
+        {
+            case null:
+                value = 0;
+                return false;
+            case decimal d:
+                value = d;
+                return true;
+            case int i:
+                value = i;
+                return true;
+            case long l:
+                value = l;
+                return true;
+            case double db:
+                value = (decimal)db;
+                return true;
+            case float f:
+                value = (decimal)f;
+                return true;
+            case short s:
+                value = s;
+                return true;
+            case byte b:
+                value = b;
+                return true;
+            default:
+                return decimal.TryParse(raw.ToString(), NumberStyles.Any, CultureInfo.CurrentCulture, out value)
+                    || decimal.TryParse(raw.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out value);
+        }
+    }
+
+    private static object? GetValue(TItem item, string fieldName)
+    {
+        if (item is null || string.IsNullOrEmpty(fieldName))
+            return null;
+
+        var p = typeof(TItem).GetProperty(fieldName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+        return p?.GetValue(item);
+    }
+
+    private async Task ExportExcelAsync()
+    {
+        if (ActiveColumns.Count == 0 || _visibleRows is null)
+            return;
+
+        var exportCols = ActiveColumns.Where(c => c.Printable).ToList();
+        var sb = new StringBuilder();
+        var headers = exportCols.Select(c => $"\"{c.Caption?.Replace("\"", "\"\"")}\"");
+        sb.AppendLine(string.Join(";", headers));
+
+        foreach (var item in _visibleRows)
+        {
+            var rowData = new List<string>(exportCols.Count);
+            foreach (var col in exportCols)
+            {
+                var val = col.ValueGetter is not null
+                    ? col.ValueGetter(item)?.ToString()
+                    : (!string.IsNullOrEmpty(col.Field) ? GetValue(item, col.Field)?.ToString() : null);
+                rowData.Add($"\"{val?.Replace("\"", "\"\"")}\"");
+            }
+
+            sb.AppendLine(string.Join(";", rowData));
+        }
+
+        var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
+        var fileName = $"{(string.IsNullOrWhiteSpace(Title) ? Loc[SbsLocalizerKeys.ReportDefaultTitle] : Title)}.csv";
+        await JSRuntime.InvokeVoidAsync("downloadFileFromBytes", fileName, "text/csv;charset=utf-8", bytes);
+    }
+
+    private async Task ExportPdfAsync()
+    {
+        if (ActiveColumns.Count == 0 || _visibleRows is null)
+            return;
+
+        var exportCols = ActiveColumns.Where(c => c.Printable).ToList();
+        var sb = new StringBuilder();
+        sb.Append("<table><thead><tr>");
+        foreach (var col in exportCols)
+            sb.Append($"<th>{WebUtility.HtmlEncode(col.Caption)}</th>");
+        sb.Append("</tr></thead><tbody>");
+
+        foreach (var item in _visibleRows)
+        {
+            sb.Append("<tr>");
+            foreach (var col in exportCols)
+            {
+                var val = col.ValueGetter is not null
+                    ? col.ValueGetter(item)?.ToString()
+                    : (!string.IsNullOrEmpty(col.Field) ? GetValue(item, col.Field)?.ToString() : null);
+                sb.Append($"<td>{WebUtility.HtmlEncode(val)}</td>");
+            }
+
+            sb.Append("</tr>");
+        }
+
+        sb.Append("</tbody></table>");
+
+        var reportTitle = string.IsNullOrWhiteSpace(Title) ? Loc[SbsLocalizerKeys.ReportDefaultTitle] : Title;
+        await JSRuntime.InvokeVoidAsync("printHtml", sb.ToString(), reportTitle);
+    }
+}

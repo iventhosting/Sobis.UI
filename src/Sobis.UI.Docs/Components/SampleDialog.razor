@@ -1,0 +1,16 @@
+<SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Md">
+    <SbsAlert Severity="SbsAlertSeverity.Info" Text="@Message" Dense="true" />
+    <SbsField Label="Notunuz">
+        <SbsTextBox @bind-Value="_note" Placeholder="Bir mesaj yazın..." />
+    </SbsField>
+    <SbsStack Direction="SbsDirection.Row" Justify="SbsJustify.End" Gap="SbsSpacing.Sm">
+        <SbsButton Text="İptal" Variant="ghost" OnClick="@(() => DialogInstance?.Cancel())" />
+        <SbsButton Text="Gönder" Icon="fa fa-check" Variant="save" OnClick="@(() => DialogInstance?.Close(_note ?? "Onaylandı"))" />
+    </SbsStack>
+</SbsStack>
+
+@code {
+    [CascadingParameter] public SbsDialogInstance? DialogInstance { get; set; }
+    [Parameter] public string Message { get; set; } = string.Empty;
+    private string? _note;
+}

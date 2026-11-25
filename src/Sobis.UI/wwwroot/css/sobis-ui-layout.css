@@ -1,0 +1,30 @@
+/* ==========================================================================
+   Sobis.UI — Layout, Display & Navigation Companion Styles
+   Component-scoped styles are auto-bundled via Blazor CSS isolation
+   (Sobis.UI.styles.css). This stylesheet provides optional global utilities
+   and light-theme contrast polish for Sobis.UI layout containers.
+   ========================================================================== */
+
+:root[data-theme="light"] .sbs-card,
+:root[data-theme="light"] .sbs-exp-panel {
+    box-shadow: var(--sbs-shadow-xs);
+}
+
+:root[data-theme="light"] .sbs-drawer {
+    box-shadow: var(--sbs-shadow-lg);
+}
+
+:root[data-theme="light"] .sbs-tooltip-bubble {
+    background: var(--sbs-text);
+    color: var(--sbs-input-bg);
+    border-color: transparent;
+}
+
+:root[data-theme="light"] .sbs-skeleton-animated::after {
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(15, 23, 42, 0.08) 50%,
+        transparent 100%
+    );
+}

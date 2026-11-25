@@ -1,0 +1,85 @@
+@namespace Sobis.UI
+@inherits SbsInputBase<bool>
+
+<label class="@LabelClass" style="@BuildStyle()" @attributes="UserAttributes">
+    <input type="checkbox"
+           class="sbs-check"
+           checked="@CurrentChecked"
+           disabled="@EffectiveDisabled"
+           @onchange="OnChangeAsync" />
+    @if (ChildContent is not null)
+    {
+        <span>@ChildContent</span>
+    }
+    else if (!string.IsNullOrEmpty(Label))
+    {
+        <span>@Label</span>
+    }
+    @if (IsRequired)
+    {
+        <span class="sbs-check-required">*</span>
+    }
+</label>
+
+@code {
+    [Parameter] public bool Checked { get; set; }
+    [Parameter] public EventCallback<bool> CheckedChanged { get; set; }
+    [Parameter] public Expression<Func<bool>>? CheckedExpression { get; set; }
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool _boundViaValue;
+
+    private bool CurrentChecked => _boundViaValue ? Value : Checked;
+
+    protected override string? ActualPropertyName
+        => !string.IsNullOrWhiteSpace(PropertyName)
+            ? PropertyName
+            : ExtractPropertyName(CheckedExpression) ?? ExtractPropertyName(ValueExpression);
+
+    protected override bool HasValue() => CurrentChecked;
+
+    private string LabelClass => BuildClass(
+        CreateCssBuilder("sbs-check-label")
+            .AddClass("sbs-check-invalid", IsInvalid)
+            .AddClass("sbs-check-disabled", EffectiveDisabled));
+
+    public override Task SetParametersAsync(ParameterView parameters)
+    {
+        var hasChecked = parameters.TryGetValue<bool>(nameof(Checked), out _)
+                         || parameters.TryGetValue<EventCallback<bool>>(nameof(CheckedChanged), out _);
+        var hasValue = parameters.TryGetValue<bool>(nameof(Value), out _)
+                       || parameters.TryGetValue<EventCallback<bool>>(nameof(ValueChanged), out _);
+
+        if (hasValue && !hasChecked)
+            _boundViaValue = true;
+        else if (hasChecked && !hasValue)
+            _boundViaValue = false;
+
+        return base.SetParametersAsync(parameters);
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        if (_boundViaValue)
+            Checked = Value;
+        else
+            Value = Checked;
+    }
+
+    private async Task OnChangeAsync(ChangeEventArgs e)
+    {
+        if (EffectiveDisabled || EffectiveReadOnly)
+            return;
+
+        var next = e.Value is bool b && b;
+        Checked = next;
+        Value = next;
+
+        if (CheckedChanged.HasDelegate)
+            await CheckedChanged.InvokeAsync(next);
+
+        await NotifyValueChangedAsync(next);
+    }
+}

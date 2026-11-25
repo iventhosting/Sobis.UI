@@ -1,0 +1,158 @@
+.sbs-datebox .sbs-combo-trigger {
+    padding-left: 7px;
+    padding-right: 24px;
+    gap: 4px;
+}
+
+.sbs-datebox.sbs-datebox-clearable .sbs-combo-trigger {
+    padding-right: 38px;
+}
+
+.sbs-datebox-input {
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+    min-width: 0;
+    width: 100%;
+}
+
+.sbs-datebox-input::placeholder {
+    color: var(--sbs-text-muted);
+}
+
+.sbs-datebox .sbs-combo-caret {
+    margin-right: -18px;
+    font-size: var(--sbs-fs-xs);
+}
+
+.sbs-datebox.sbs-datebox-clearable .sbs-combo-caret {
+    margin-right: -32px;
+}
+
+.sbs-datebox .sbs-combo-clear {
+    right: 20px;
+    width: 16px;
+    height: 16px;
+    z-index: 2;
+}
+
+.sbs-date-panel {
+    width: 264px !important;
+    min-width: 264px !important;
+    max-width: calc(100vw - 16px) !important;
+    right: auto !important;
+    padding: 10px;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+.sbs-combo-panel-up {
+    margin-bottom: 4px;
+    margin-top: 0;
+}
+
+.sbs-date-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    font-weight: 600;
+    font-size: var(--sbs-fs-md);
+    color: var(--sbs-text);
+    user-select: none;
+}
+
+.sbs-date-header i {
+    cursor: pointer;
+    padding: 5px 10px;
+    color: var(--sbs-text-muted);
+    border-radius: var(--sbs-radius-xs);
+    transition: background var(--sbs-transition), color var(--sbs-transition);
+}
+
+.sbs-date-header i:hover {
+    color: var(--sbs-accent);
+    background: var(--sbs-card-2);
+}
+
+.sbs-date-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px 0;
+    text-align: center;
+}
+
+.sbs-date-day-name {
+    font-size: var(--sbs-fs-xs);
+    color: var(--sbs-text-muted);
+    margin-bottom: 8px;
+    user-select: none;
+}
+
+.sbs-date-cell {
+    font-size: var(--sbs-fs-sm);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: all var(--sbs-transition-fast);
+    user-select: none;
+    color: var(--sbs-text);
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.sbs-date-cell:hover:not(.disabled) {
+    background: var(--sbs-card-2);
+}
+
+.sbs-date-cell.selected {
+    background: var(--sbs-accent);
+    color: var(--sbs-primary-contrast);
+    font-weight: 700;
+}
+
+.sbs-date-cell.today {
+    border: 1px solid var(--sbs-accent);
+    color: var(--sbs-accent);
+    font-weight: 700;
+}
+
+.sbs-date-cell.today.selected {
+    border: 1px solid var(--sbs-accent);
+}
+
+.sbs-date-cell.muted {
+    color: var(--sbs-text-muted);
+    opacity: 0.6;
+}
+
+.sbs-date-cell.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.sbs-date-footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+    border-top: 1px solid var(--sbs-border);
+    padding-top: 10px;
+}
+
+.sbs-date-footer span {
+    font-size: var(--sbs-fs-sm);
+    color: var(--sbs-accent);
+    cursor: pointer;
+    transition: opacity var(--sbs-transition-fast);
+}
+
+.sbs-date-footer span:hover {
+    text-decoration: underline;
+}

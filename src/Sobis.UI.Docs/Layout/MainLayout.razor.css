@@ -1,0 +1,43 @@
+.docs-shell-host {
+    display: contents;
+}
+
+.docs-shell-host ::deep .docs-page {
+    height: 100vh;
+}
+
+.docs-shell-host ::deep .docs-topbar {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    border-top: 0;
+    padding: 8px 16px;
+}
+
+.docs-shell-host ::deep .docs-body-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.docs-shell-host ::deep .docs-sidebar-card {
+    border-radius: 0;
+    border-top: 0;
+    border-bottom: 0;
+    border-left: 0;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.docs-shell-host ::deep .docs-nav-btn {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 8px 12px;
+    min-height: 32px;
+}
+
+.docs-shell-host ::deep .docs-content-scroll {
+    overflow-y: auto;
+    height: 100%;
+    min-height: 0;
+}

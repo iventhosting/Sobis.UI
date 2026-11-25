@@ -1,0 +1,80 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<div class="@RootClass" style="@RootStyle" title="@(string.IsNullOrEmpty(Title) ? null : Title)" @attributes="UserAttributes">
+    @if (EffectiveLabelPosition != SbsLabelPosition.Hidden && !string.IsNullOrEmpty(Label))
+    {
+        <label class="sbs-field-label" for="@For" style="@LabelStyle">
+            @Label
+            @if (Required)
+            {
+                <span class="sbs-field-req" aria-hidden="true">*</span>
+            }
+        </label>
+    }
+    <div class="sbs-field-control">
+        @ChildContent
+        @if (!string.IsNullOrWhiteSpace(ErrorText))
+        {
+            <div class="sbs-field-error" role="alert">@ErrorText</div>
+        }
+        else if (!string.IsNullOrWhiteSpace(HelpText))
+        {
+            <div class="sbs-field-help">@HelpText</div>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>Field label text.</summary>
+    [Parameter] public string Label { get; set; } = "";
+
+    /// <summary>Optional muted helper text rendered below the input control.</summary>
+    [Parameter] public string? HelpText { get; set; }
+
+    /// <summary>Optional validation error message rendered below the input control.</summary>
+    [Parameter] public string? ErrorText { get; set; }
+
+    /// <summary>Displays a required asterisk indicator next to the label.</summary>
+    [Parameter] public bool Required { get; set; }
+
+    /// <summary>Column span when placed inside a multi-column SbsFormGroup, SbsFormLayout, or SbsGridLayout.</summary>
+    [Parameter] public int? ColSpan { get; set; }
+
+    /// <summary>Overrides the label width for Left-positioned labels (e.g. "120px").</summary>
+    [Parameter] public string? LabelWidth { get; set; }
+
+    /// <summary>Overrides the label position (Left, Top, Hidden). Inherits from SbsFormContext when omitted.</summary>
+    [Parameter] public SbsLabelPosition? LabelPosition { get; set; }
+
+    /// <summary>Optional HTML title tooltip on the field wrapper.</summary>
+    [Parameter] public string Title { get; set; } = "";
+
+    /// <summary>Optional HTML for attribute associating the label with an input id.</summary>
+    [Parameter] public string? For { get; set; }
+
+    /// <summary>Control content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [CascadingParameter] private SbsFormContext? FormContext { get; set; }
+
+    private SbsLabelPosition EffectiveLabelPosition =>
+        LabelPosition ?? FormContext?.LabelPosition ?? SbsLabelPosition.Left;
+
+    private string? EffectiveLabelWidth =>
+        !string.IsNullOrWhiteSpace(LabelWidth) ? LabelWidth : FormContext?.LabelWidth;
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-field")
+            .AddClass("sbs-field-top", EffectiveLabelPosition == SbsLabelPosition.Top)
+            .AddClass("sbs-field-has-meta", !string.IsNullOrWhiteSpace(ErrorText) || !string.IsNullOrWhiteSpace(HelpText))
+            .AddClass("sbs-field-invalid", !string.IsNullOrWhiteSpace(ErrorText)));
+
+    private string? RootStyle => BuildStyle(
+        CreateStyleBuilder()
+            .AddStyle("grid-column", $"span {ColSpan}", ColSpan is > 0));
+
+    private string? LabelStyle => StyleBuilder.Empty()
+        .AddStyle("width", EffectiveLabelWidth, EffectiveLabelPosition == SbsLabelPosition.Left && !string.IsNullOrWhiteSpace(EffectiveLabelWidth))
+        .Build();
+}

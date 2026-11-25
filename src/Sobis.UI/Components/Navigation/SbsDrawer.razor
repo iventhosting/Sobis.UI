@@ -1,0 +1,178 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@inject IServiceProvider ServiceProvider
+
+@if (Open)
+{
+    <div class="sbs-drawer-root @(Backdrop ? "sbs-drawer-has-backdrop" : "")"
+         @onkeydown="OnKeyDownAsync">
+        @if (Backdrop)
+        {
+            <div class="sbs-drawer-backdrop" @onclick="OnBackdropClickAsync"></div>
+        }
+
+        <aside @ref="_panelRef"
+               class="@PanelClass"
+               style="@PanelStyle"
+               role="dialog"
+               aria-modal="true"
+               aria-label="@Title"
+               tabindex="-1"
+               @attributes="UserAttributes">
+            @if (HasHeader)
+            {
+                <div class="sbs-drawer-header">
+                    @if (HeaderContent is not null)
+                    {
+                        <div class="sbs-drawer-header-custom">@HeaderContent</div>
+                    }
+                    else
+                    {
+                        <div class="sbs-drawer-header-main">
+                            @if (!string.IsNullOrWhiteSpace(Icon))
+                            {
+                                <i class="@Icon sbs-drawer-icon" aria-hidden="true"></i>
+                            }
+                            <div class="sbs-drawer-titles">
+                                @if (!string.IsNullOrWhiteSpace(Title))
+                                {
+                                    <div class="sbs-drawer-title">@Title</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(Subtitle))
+                                {
+                                    <div class="sbs-drawer-subtitle">@Subtitle</div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    @if (ShowCloseButton)
+                    {
+                        <button type="button" class="sbs-drawer-close" aria-label="@CloseLabel" @onclick="CloseAsync">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </button>
+                    }
+                </div>
+            }
+
+            <div class="sbs-drawer-body">
+                @ChildContent
+            </div>
+
+            @if (FooterContent is not null)
+            {
+                <div class="sbs-drawer-footer">
+                    @FooterContent
+                </div>
+            }
+        </aside>
+    </div>
+}
+
+@code {
+    /// <summary>Controls whether the drawer is open.</summary>
+    [Parameter] public bool Open { get; set; }
+
+    /// <summary>Two-way binding callback for Open.</summary>
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>Viewport edge from which the drawer slides in (Left, Right, Top, Bottom). Defaults to Right.</summary>
+    [Parameter] public SbsPlacement Anchor { get; set; } = SbsPlacement.Right;
+
+    /// <summary>Drawer width for Left/Right anchors (or height for Top/Bottom anchors). Defaults to "420px".</summary>
+    [Parameter] public string Width { get; set; } = "420px";
+
+    /// <summary>Optional drawer header title.</summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>Optional drawer header subtitle.</summary>
+    [Parameter] public string? Subtitle { get; set; }
+
+    /// <summary>Optional header icon CSS class.</summary>
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>Displays a dimmed backdrop behind the drawer. Defaults to true.</summary>
+    [Parameter] public bool Backdrop { get; set; } = true;
+
+    /// <summary>Closes the drawer when clicking the backdrop. Defaults to true.</summary>
+    [Parameter] public bool CloseOnBackdrop { get; set; } = true;
+
+    /// <summary>Closes the drawer when pressing Escape. Defaults to true.</summary>
+    [Parameter] public bool CloseOnEscape { get; set; } = true;
+
+    /// <summary>Shows the close button in the header. Defaults to true.</summary>
+    [Parameter] public bool ShowCloseButton { get; set; } = true;
+
+    /// <summary>Optional custom header content replacing Icon + Title.</summary>
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+
+    /// <summary>Optional fixed footer bar.</summary>
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+
+    /// <summary>Drawer body content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private ElementReference _panelRef;
+    private bool _wasOpen;
+
+    private bool HasHeader =>
+        HeaderContent is not null ||
+        !string.IsNullOrWhiteSpace(Title) ||
+        !string.IsNullOrWhiteSpace(Subtitle) ||
+        !string.IsNullOrWhiteSpace(Icon) ||
+        ShowCloseButton;
+
+    private bool IsVerticalAnchor => Anchor is SbsPlacement.Top or SbsPlacement.Bottom;
+
+    private string CloseLabel
+    {
+        get
+        {
+            var localizer = ServiceProvider.GetService(typeof(ISbsLocalizer)) as ISbsLocalizer;
+            return localizer?[SbsLocalizerKeys.Close] ?? "Kapat";
+        }
+    }
+
+    private string PanelClass => BuildClass(
+        CreateCssBuilder("sbs-drawer")
+            .AddClass($"sbs-drawer-{Anchor.ToCss()}"));
+
+    private string? PanelStyle => BuildStyle(
+        CreateStyleBuilder()
+            .AddStyle("width", Width, !IsVerticalAnchor && !string.IsNullOrWhiteSpace(Width))
+            .AddStyle("height", Width, IsVerticalAnchor && !string.IsNullOrWhiteSpace(Width)));
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Open && !_wasOpen)
+        {
+            _wasOpen = true;
+            try
+            {
+                await _panelRef.FocusAsync();
+            }
+            catch
+            {
+                // Element focus may be unavailable during prerender/disconnect.
+            }
+        }
+        else if (!Open && _wasOpen)
+        {
+            _wasOpen = false;
+        }
+    }
+
+    private async Task CloseAsync()
+    {
+        if (!Open)
+            return;
+
+        Open = false;
+        await OpenChanged.InvokeAsync(false);
+    }
+
+    private Task OnBackdropClickAsync()
+        => CloseOnBackdrop ? CloseAsync() : Task.CompletedTask;
+
+    private Task OnKeyDownAsync(KeyboardEventArgs e)
+        => CloseOnEscape && e.Key == "Escape" ? CloseAsync() : Task.CompletedTask;
+}

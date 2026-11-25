@@ -1,0 +1,15 @@
+.sbs-toolbar-dense {
+    padding: 5px 8px;
+    gap: 4px;
+}
+
+.sbs-toolbar-nowrap {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+
+.sbs-toolbar-sticky {
+    position: sticky;
+    top: 0;
+    z-index: var(--sbs-z-sticky);
+}

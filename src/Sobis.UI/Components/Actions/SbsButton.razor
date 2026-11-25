@@ -1,0 +1,129 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@inject ISbsAuthorizationProvider AuthService
+
+@if (!_isHidden)
+{
+    <button type="@Type"
+            class="@ButtonClass"
+            style="@BuildStyle()"
+            disabled="@EffectiveDisabled"
+            @onclick="OnClickInternal"
+            @onclick:stopPropagation="StopPropagation"
+            @attributes="UserAttributes">
+        @if (Loading)
+        {
+            <i class="fa fa-circle-notch fa-spin"></i>
+        }
+        else if (!string.IsNullOrEmpty(Icon))
+        {
+            <i class="@Icon"></i>
+        }
+        @if (!string.IsNullOrEmpty(Text))
+        {
+            <span>@Text</span>
+        }
+        @ChildContent
+    </button>
+}
+
+@code {
+    [Parameter] public string Text { get; set; } = string.Empty;
+    [Parameter] public string Icon { get; set; } = string.Empty;
+
+    /// <summary>Visual variant string (primary, ghost, save, secondary, danger, success, warning, info, link, outlined, soft, text).</summary>
+    [Parameter] public string Variant { get; set; } = "primary";
+
+    /// <summary>Optional strongly-typed visual variant. Overrides <see cref="Variant"/> when specified.</summary>
+    [Parameter] public SbsVariant? ButtonVariant { get; set; }
+
+    /// <summary>Button size string (xs, sm, md, lg, xl).</summary>
+    [Parameter] public string Size { get; set; } = "md";
+
+    /// <summary>Optional strongly-typed button size. Overrides <see cref="Size"/> when specified.</summary>
+    [Parameter] public SbsSize? ButtonSize { get; set; }
+
+    [Parameter] public string Type { get; set; } = "button";
+
+    /// <summary>When true, omits standard sbs-btn styling and applies only CssClass / class attributes.</summary>
+    [Parameter] public bool Bare { get; set; }
+
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool StopPropagation { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Claim code(s) required to render and execute this button.
+    /// Comma-separated values use OR semantics (HasAnyClaimAsync).
+    /// </summary>
+    [Parameter] public string? ClaimCode { get; set; }
+
+    private bool _isHidden;
+    private bool _isWorking;
+    private long _permissionRevision;
+
+    private bool EffectiveDisabled => Disabled || Loading;
+
+    private string EffectiveVariant => ButtonVariant?.ToCss()
+        ?? (string.IsNullOrWhiteSpace(Variant) ? "primary" : Variant.Trim().ToLowerInvariant());
+
+    private string EffectiveSize => ButtonSize?.ToCss()
+        ?? (string.IsNullOrWhiteSpace(Size) ? "md" : Size.Trim().ToLowerInvariant());
+
+    private string ButtonClass => Bare
+        ? BuildClass()
+        : BuildClass(CreateCssBuilder("sbs-btn")
+            .AddClass($"sbs-btn-{EffectiveVariant}")
+            .AddClass($"sbs-btn-{EffectiveSize}")
+            .AddClass("sbs-btn-disabled", EffectiveDisabled));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var revision = ++_permissionRevision;
+        _isHidden = !string.IsNullOrWhiteSpace(ClaimCode);
+        if (!string.IsNullOrWhiteSpace(ClaimCode) && AuthService is not null)
+        {
+            var codes = ClaimCode.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var allowed = codes.Length > 1
+                ? await AuthService.HasAnyClaimAsync(codes)
+                : await AuthService.HasClaimAsync(codes[0]);
+
+            if (revision == _permissionRevision)
+                _isHidden = !allowed;
+        }
+    }
+
+    private async Task OnClickInternal()
+    {
+        if (EffectiveDisabled || _isWorking)
+            return;
+
+        _isWorking = true;
+        try
+        {
+            var claim = ClaimCode;
+            if (!string.IsNullOrWhiteSpace(claim) && AuthService is not null)
+            {
+                var codes = claim.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var allowed = codes.Length > 1
+                    ? await AuthService.HasAnyClaimAsync(codes)
+                    : await AuthService.HasClaimAsync(codes[0]);
+
+                if (!allowed)
+                    return;
+            }
+
+            if (claim != ClaimCode || EffectiveDisabled)
+                return;
+
+            if (OnClick.HasDelegate)
+                await OnClick.InvokeAsync();
+        }
+        finally
+        {
+            _isWorking = false;
+        }
+    }
+}

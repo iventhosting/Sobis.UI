@@ -1,0 +1,53 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<div class="@RootClass" style="@RootStyle" @attributes="UserAttributes">
+    @if (!string.IsNullOrWhiteSpace(Icon))
+    {
+        <div class="sbs-empty-icon" aria-hidden="true">
+            <i class="@Icon"></i>
+        </div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Title))
+    {
+        <div class="sbs-empty-title">@Title</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Description))
+    {
+        <div class="sbs-empty-desc">@Description</div>
+    }
+    @if (ChildContent is not null)
+    {
+        <div class="sbs-empty-extra">@ChildContent</div>
+    }
+    @if (ActionContent is not null)
+    {
+        <div class="sbs-empty-actions">@ActionContent</div>
+    }
+</div>
+
+@code {
+    /// <summary>Icon class displayed at the top of the empty state.</summary>
+    [Parameter] public string Icon { get; set; } = "fa-solid fa-inbox";
+
+    /// <summary>Primary empty state heading.</summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>Secondary muted explanation text.</summary>
+    [Parameter] public string? Description { get; set; }
+
+    /// <summary>Uses reduced padding for inline cards and small containers.</summary>
+    [Parameter] public bool Compact { get; set; }
+
+    /// <summary>Optional action slot (e.g. "Add New" button).</summary>
+    [Parameter] public RenderFragment? ActionContent { get; set; }
+
+    /// <summary>Optional custom body content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-empty-state")
+            .AddClass("sbs-empty-state-compact", Compact));
+
+    private string? RootStyle => BuildStyle();
+}

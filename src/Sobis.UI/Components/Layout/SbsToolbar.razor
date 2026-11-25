@@ -1,0 +1,45 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<div class="@RootClass" style="@RootStyle" role="toolbar" @attributes="UserAttributes">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>Spacing between toolbar items.</summary>
+    [Parameter] public SbsSpacing? Gap { get; set; }
+
+    /// <summary>Inner padding override.</summary>
+    [Parameter] public SbsSpacing? Padding { get; set; }
+
+    /// <summary>Allows toolbar items to wrap onto multiple lines on narrow screens.</summary>
+    [Parameter] public bool Wrap { get; set; } = true;
+
+    /// <summary>Compact vertical padding for dense headers or sub-toolbars.</summary>
+    [Parameter] public bool Dense { get; set; }
+
+    /// <summary>Sticks the toolbar to the top of its scroll container.</summary>
+    [Parameter] public bool Sticky { get; set; }
+
+    /// <summary>Cross-axis alignment of toolbar items.</summary>
+    [Parameter] public SbsAlign Align { get; set; } = SbsAlign.Center;
+
+    /// <summary>Main-axis alignment of toolbar items.</summary>
+    [Parameter] public SbsJustify Justify { get; set; } = SbsJustify.Start;
+
+    /// <summary>Toolbar content (buttons, dividers, spacers, inline filters).</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-toolbar")
+            .AddClass("sbs-toolbar-dense", Dense)
+            .AddClass("sbs-toolbar-sticky", Sticky)
+            .AddClass("sbs-toolbar-nowrap", !Wrap));
+
+    private string? RootStyle => BuildStyle(
+        CreateStyleBuilder()
+            .AddStyle("gap", Gap?.ToCssVar(), Gap.HasValue)
+            .AddStyle("padding", Padding?.ToCssVar(), Padding.HasValue)
+            .AddStyle("align-items", Align.ToCss(), Align != SbsAlign.Center)
+            .AddStyle("justify-content", Justify.ToCss(), Justify != SbsJustify.Start));
+}

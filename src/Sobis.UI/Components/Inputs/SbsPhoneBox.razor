@@ -1,0 +1,113 @@
+@namespace Sobis.UI
+@inherits SbsInputBase<string?>
+
+<input type="tel"
+       class="@InputClass"
+       style="@BuildStyle()"
+       value="@_displayValue"
+       placeholder="@EffectivePlaceholder"
+       maxlength="11"
+       inputmode="numeric"
+       autocomplete="tel"
+       disabled="@EffectiveDisabled"
+       readonly="@EffectiveReadOnly"
+       @oninput="OnInputAsync"
+       @onfocus="OnFocusAsync"
+       @onblur="OnBlurAsync"
+       @attributes="UserAttributes" />
+
+@code {
+    private string _displayValue = string.Empty;
+    private bool _isFocused;
+
+    private string EffectivePlaceholder => string.IsNullOrEmpty(Placeholder) ? "0(5__) ___ __ __" : Placeholder;
+
+    private string InputClass => BuildClass(
+        CreateCssBuilder("sbs-input")
+            .AddClass("sbs-input-invalid", IsInvalid));
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        _displayValue = _isFocused ? CleanPhone(Value) : FormatPhone(Value);
+    }
+
+    private Task OnFocusAsync()
+    {
+        if (EffectiveDisabled || EffectiveReadOnly)
+            return Task.CompletedTask;
+
+        _isFocused = true;
+        var cleaned = CleanPhone(Value);
+        if (string.IsNullOrEmpty(cleaned))
+            cleaned = "0";
+        else if (!cleaned.StartsWith('0'))
+            cleaned = "0" + cleaned;
+
+        _displayValue = cleaned;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnInputAsync(ChangeEventArgs e)
+    {
+        var input = e.Value?.ToString() ?? string.Empty;
+        var digitsOnly = new string(input.Where(char.IsDigit).ToArray());
+
+        // Always keep leading 0 for Turkish phone format.
+        if (string.IsNullOrEmpty(digitsOnly))
+            digitsOnly = "0";
+        else if (!digitsOnly.StartsWith('0'))
+            digitsOnly = "0" + digitsOnly;
+
+        if (digitsOnly.Length > 11)
+            digitsOnly = digitsOnly[..11];
+
+        _displayValue = input != digitsOnly ? digitsOnly : input;
+
+        await NotifyValueChangedAsync(digitsOnly);
+    }
+
+    private async Task OnBlurAsync()
+    {
+        _isFocused = false;
+
+        // If user left only the prefix "0", store null instead of a bare "0".
+        if (Value == "0")
+        {
+            await NotifyValueChangedAsync(null);
+        }
+
+        _displayValue = FormatPhone(Value);
+    }
+
+    private static string CleanPhone(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
+
+        return new string(input.Where(char.IsDigit).ToArray());
+    }
+
+    private static string FormatPhone(string? input)
+    {
+        var digitsOnly = CleanPhone(input);
+        if (string.IsNullOrEmpty(digitsOnly))
+            return string.Empty;
+
+        if (!digitsOnly.StartsWith('0'))
+            digitsOnly = "0" + digitsOnly;
+
+        var formatted = string.Empty;
+        for (var i = 0; i < digitsOnly.Length && i < 11; i++)
+        {
+            if (i == 0) formatted += digitsOnly[i];
+            else if (i == 1) formatted += "(" + digitsOnly[i];
+            else if (i == 4) formatted += ") " + digitsOnly[i];
+            else if (i == 7) formatted += " " + digitsOnly[i];
+            else if (i == 9) formatted += " " + digitsOnly[i];
+            else formatted += digitsOnly[i];
+        }
+
+        return formatted;
+    }
+}

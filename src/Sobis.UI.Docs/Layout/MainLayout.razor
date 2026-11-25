@@ -1,0 +1,106 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<section class="docs-shell-host">
+    <SbsPage Padding="SbsSpacing.None" Gap="SbsSpacing.None" Scrollable="false" CssClass="docs-page">
+        <SbsToolbar Sticky="true" CssClass="docs-topbar">
+            <SbsIcon Name="fa-solid fa-layer-group" Color="SbsColor.Primary" Size="SbsSize.Lg" />
+            <SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.None">
+                <SbsStack Direction="SbsDirection.Row" Align="SbsAlign.Center" Gap="SbsSpacing.Xs">
+                    <SbsText Variant="SbsTextVariant.H5" Bold="true">Sobis.UI</SbsText>
+                    <SbsBadge Text="v1.0.0" Color="SbsColor.Primary" Variant="SbsVariant.Soft" Size="SbsSize.Xs" />
+                    <SbsBadge Text="Zero-Div Blazor" Color="SbsColor.Success" Dot="true" Size="SbsSize.Xs" />
+                </SbsStack>
+                <SbsText Variant="SbsTextVariant.Caption" Color="SbsColor.Muted">Sobis Bilgi Teknolojileri Sistemleri • www.sobistech.com</SbsText>
+            </SbsStack>
+            <SbsSpacer />
+            <SbsButton Text="@(_isLight ? "Koyu Tema" : "Açık Tema")"
+                       Icon="@(_isLight ? "fa fa-moon" : "fa fa-sun")"
+                       Variant="ghost"
+                       Size="sm"
+                       OnClick="ToggleThemeAsync" />
+        </SbsToolbar>
+
+        <SbsGridLayout Columns="240px 1fr" Gap="SbsSpacing.None" FillHeight="true" CssClass="docs-body-grid">
+            <SbsCard Padding="SbsSpacing.Sm" CssClass="docs-sidebar-card">
+                <SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Xs">
+                    <SbsTextBox @bind-Value="_search" Placeholder="Bileşen ara..." Immediate="true" />
+                    <SbsDivider />
+                    @foreach (var item in FilteredItems)
+                    {
+                        var current = item;
+                        var active = IsActive(current.Href);
+                        <SbsButton Text="@current.Title"
+                                   Icon="@current.Icon"
+                                   Variant="@(active ? "primary" : "ghost")"
+                                   Size="sm"
+                                   CssClass="docs-nav-btn"
+                                   OnClick="@(() => Nav.NavigateTo(current.Href))" />
+                    }
+                </SbsStack>
+            </SbsCard>
+
+            <SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Md" Padding="SbsSpacing.Md" CssClass="docs-content-scroll">
+                @Body
+            </SbsStack>
+        </SbsGridLayout>
+    </SbsPage>
+</section>
+
+<SbsToastContainer />
+<SbsConfirmDialog />
+<SbsDialogProvider />
+
+@code {
+    private sealed record NavItem(string Title, string Href, string Icon, string Keywords);
+
+    private static readonly List<NavItem> Items =
+    [
+        new("Kurulum & Başlangıç", "", "fa fa-rocket", "kurulum install nuget program app imports"),
+        new("DataGrid (SbsGrid)", "grid", "fa fa-table", "grid tablo sbsgrid column sort paging export"),
+        new("Yerleşim & Form", "layout", "fa fa-table-columns", "page toolbar stack gridlayout formlayout formgroup field card"),
+        new("Giriş Kontrolleri", "inputs", "fa fa-keyboard", "textbox textarea numberbox phonebox datebox combobox multiselect tagbox checkbox switch radio fileupload"),
+        new("Navigasyon", "navigation", "fa fa-folder-tree", "tabs tabpanel accordion expansionpanel drawer"),
+        new("Pencereler & Bildirim", "overlays", "fa fa-window-restore", "modal dialog confirm toast contextmenu loading"),
+        new("Görünüm & Geri Bildirim", "display", "fa fa-palette", "text alert badge chip icon tooltip progress skeleton emptystate button")
+    ];
+
+    private string? _search;
+    private bool _isLight;
+
+    private IEnumerable<NavItem> FilteredItems => string.IsNullOrWhiteSpace(_search)
+        ? Items
+        : Items.Where(i => i.Title.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                        || i.Keywords.Contains(_search, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var theme = await JS.InvokeAsync<string>("sobisUI.theme.get");
+                _isLight = string.Equals(theme, "light", StringComparison.OrdinalIgnoreCase);
+                StateHasChanged();
+            }
+            catch { }
+        }
+    }
+
+    private bool IsActive(string href)
+    {
+        var rel = Nav.ToBaseRelativePath(Nav.Uri).Trim('/');
+        return string.Equals(rel, href, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private async Task ToggleThemeAsync()
+    {
+        try
+        {
+            var next = await JS.InvokeAsync<string>("sobisUI.theme.toggle");
+            _isLight = string.Equals(next, "light", StringComparison.OrdinalIgnoreCase);
+        }
+        catch { }
+    }
+}

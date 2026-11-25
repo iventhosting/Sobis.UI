@@ -1,0 +1,27 @@
+.sbs-form-layout {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sbs-form-layout-grid {
+    display: grid;
+    grid-template-columns: var(--sbs-fl-cols, 1fr);
+    column-gap: 14px;
+    row-gap: 4px;
+    align-items: start;
+}
+
+.sbs-form-layout-grid > ::deep .sbs-field {
+    margin-bottom: 0;
+}
+
+.sbs-form-layout-disabled {
+    opacity: 0.65;
+}
+
+@media (max-width: 768px) {
+    .sbs-form-layout-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

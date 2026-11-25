@@ -1,0 +1,24 @@
+.demo-section-host {
+    display: contents;
+}
+
+.demo-section-host .demo-code-pre {
+    margin: 0;
+    padding: 14px 16px;
+    background: #131622;
+    color: #e2e8f0;
+    border: 1px solid var(--sbs-border);
+    border-radius: var(--sbs-radius);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+    overflow-x: auto;
+    max-height: 420px;
+    overflow-y: auto;
+    white-space: pre;
+}
+
+:global([data-theme="light"]) .demo-section-host .demo-code-pre {
+    background: #1e293b;
+    color: #f1f5f9;
+}

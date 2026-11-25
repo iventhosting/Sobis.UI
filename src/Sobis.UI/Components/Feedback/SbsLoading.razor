@@ -1,0 +1,36 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@inject ISbsLocalizer Loc
+
+<div class="@BuildClass("sbs-loading-wrap")" style="@BuildStyle()" @attributes="UserAttributes">
+    @ChildContent
+    @if (Visible)
+    {
+        <div class="sbs-loading-overlay" role="status" aria-live="polite">
+            <div class="sbs-loading-card sbs-loading-@EffectiveSize">
+                <i class="fa fa-circle-notch fa-spin"></i>
+                <span>@DisplayText</span>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public string? Text { get; set; }
+
+    /// <summary>Spinner card size string (sm, md, lg).</summary>
+    [Parameter] public string Size { get; set; } = "lg";
+
+    /// <summary>Optional strongly-typed spinner size. Overrides <see cref="Size"/> when specified.</summary>
+    [Parameter] public SbsSize? LoadingSize { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string EffectiveSize => LoadingSize?.ToCss()
+        ?? (string.IsNullOrWhiteSpace(Size) ? "lg" : Size.Trim().ToLowerInvariant());
+
+    private string DisplayText => string.IsNullOrWhiteSpace(Text)
+        ? Loc[SbsLocalizerKeys.Loading]
+        : Text;
+}

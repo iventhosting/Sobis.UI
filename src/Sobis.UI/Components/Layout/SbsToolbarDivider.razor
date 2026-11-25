@@ -1,0 +1,9 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<span class="@RootClass" style="@RootStyle" role="separator" aria-orientation="vertical" @attributes="UserAttributes"></span>
+
+@code {
+    private string RootClass => BuildClass("sbs-toolbar-divider");
+    private string? RootStyle => BuildStyle();
+}

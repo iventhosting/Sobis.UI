@@ -1,0 +1,40 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@using System.Globalization
+
+@if (Visible)
+{
+    <div class="@BuildClass("sbs-ctx-menu")"
+         style="@MenuStyle"
+         role="menu"
+         @onclick:stopPropagation="true"
+         @attributes="UserAttributes">
+        <CascadingValue Value="this" IsFixed="true">
+            @ChildContent
+        </CascadingValue>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public double X { get; set; }
+    [Parameter] public double Y { get; set; }
+    [Parameter] public bool CloseOnClick { get; set; } = true;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string? MenuStyle => BuildStyle(
+        CreateStyleBuilder()
+            .AddStyle("left", $"{X.ToString(CultureInfo.InvariantCulture)}px")
+            .AddStyle("top", $"{Y.ToString(CultureInfo.InvariantCulture)}px"));
+
+    internal async Task NotifyItemClickedAsync()
+    {
+        if (CloseOnClick && Visible)
+        {
+            Visible = false;
+            if (VisibleChanged.HasDelegate)
+                await VisibleChanged.InvokeAsync(false);
+        }
+    }
+}

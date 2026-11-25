@@ -1,0 +1,125 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+@switch (EffectiveTag)
+{
+    case "h1":
+        <h1 class="@RootClass" style="@RootStyle" @attributes="UserAttributes">@ContentFragment</h1>
+        break;
+    case "h2":
+        <h2 class="@RootClass" style="@RootStyle" @attributes="UserAttributes">@ContentFragment</h2>
+        break;
+    case "h3":
+        <h3 class="@RootClass" style="@RootStyle" @attributes="UserAttributes">@ContentFragment</h3>
+        break;
+    case "h4":
+        <h4 class="@RootClass" style="@RootStyle" @attributes="UserAttributes">@ContentFragment</h4>
+        break;
+    case "h5":
+        <h5 class="@RootClass" style="@RootStyle" @attributes="UserAttributes">@ContentFragment</h5>
+        break;
+    case "h6":
+        <h6 class="@RootClass" style="@RootStyle" @attributes="UserAttributes">@ContentFragment</h6>
+        break;
+    case "div":
+        <div class="@RootClass" style="@RootStyle" @attributes="UserAttributes">@ContentFragment</div>
+        break;
+    case "p":
+        <p class="@RootClass" style="@RootStyle" @attributes="UserAttributes">@ContentFragment</p>
+        break;
+    case "small":
+        <small class="@RootClass" style="@RootStyle" @attributes="UserAttributes">@ContentFragment</small>
+        break;
+    case "strong":
+        <strong class="@RootClass" style="@RootStyle" @attributes="UserAttributes">@ContentFragment</strong>
+        break;
+    case "label":
+        <label class="@RootClass" style="@RootStyle" @attributes="UserAttributes">@ContentFragment</label>
+        break;
+    case "code":
+        <code class="@RootClass" style="@RootStyle" @attributes="UserAttributes">@ContentFragment</code>
+        break;
+    default:
+        <span class="@RootClass" style="@RootStyle" @attributes="UserAttributes">@ContentFragment</span>
+        break;
+}
+
+@code {
+    /// <summary>Typography scale variant (H1..H6, Subtitle, Body, Caption, Muted, Overline).</summary>
+    [Parameter] public SbsTextVariant Variant { get; set; } = SbsTextVariant.Body;
+
+    /// <summary>Semantic text color.</summary>
+    [Parameter] public SbsColor Color { get; set; } = SbsColor.Default;
+
+    /// <summary>Applies bold font weight.</summary>
+    [Parameter] public bool Bold { get; set; }
+
+    /// <summary>Applies italic font style.</summary>
+    [Parameter] public bool Italic { get; set; }
+
+    /// <summary>Renders using the monospace font stack.</summary>
+    [Parameter] public bool Monospace { get; set; }
+
+    /// <summary>Horizontal text alignment.</summary>
+    [Parameter] public SbsTextAlign? Align { get; set; }
+
+    /// <summary>Truncates overflowing single-line text with an ellipsis.</summary>
+    [Parameter] public bool Ellipsis { get; set; }
+
+    /// <summary>Optional multi-line clamp count (e.g. 2 or 3 lines).</summary>
+    [Parameter] public int? MaxLines { get; set; }
+
+    /// <summary>Explicit HTML tag override (h1..h6, p, span, div, small, strong, label, code).</summary>
+    [Parameter] public string? As { get; set; }
+
+    /// <summary>Optional text string when ChildContent is not supplied.</summary>
+    [Parameter] public string? Text { get; set; }
+
+    /// <summary>Rich inline content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private RenderFragment ContentFragment => builder =>
+    {
+        if (ChildContent is not null)
+            builder.AddContent(0, ChildContent);
+        else if (!string.IsNullOrEmpty(Text))
+            builder.AddContent(1, Text);
+    };
+
+    private string EffectiveTag
+    {
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(As))
+                return As.Trim().ToLowerInvariant();
+
+            return Variant switch
+            {
+                SbsTextVariant.H1 => "h1",
+                SbsTextVariant.H2 => "h2",
+                SbsTextVariant.H3 => "h3",
+                SbsTextVariant.H4 => "h4",
+                SbsTextVariant.H5 => "h5",
+                SbsTextVariant.H6 => "h6",
+                SbsTextVariant.Subtitle => "p",
+                SbsTextVariant.Body => "p",
+                _ => "span"
+            };
+        }
+    }
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-text")
+            .AddClass($"sbs-text-{Variant.ToCss()}")
+            .AddClass($"sbs-text-color-{Color.ToCss()}", Color != SbsColor.Default)
+            .AddClass("sbs-text-bold", Bold)
+            .AddClass("sbs-text-italic", Italic)
+            .AddClass("sbs-text-mono", Monospace)
+            .AddClass("sbs-text-ellipsis", Ellipsis && MaxLines is null)
+            .AddClass("sbs-text-clamp", MaxLines is > 0));
+
+    private string? RootStyle => BuildStyle(
+        CreateStyleBuilder()
+            .AddStyle("text-align", Align?.ToCss(), Align.HasValue)
+            .AddStyle("-webkit-line-clamp", MaxLines?.ToString(), MaxLines is > 0));
+}

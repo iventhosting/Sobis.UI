@@ -1,0 +1,84 @@
+@namespace Sobis.UI
+@inherits SbsInputBase<string?>
+
+@if (IsImmediate)
+{
+    <textarea class="@InputClass"
+              style="@BuildStyle()"
+              rows="@Rows"
+              @bind="_currentValue"
+              @bind:event="oninput"
+              @bind:after="NotifyChangedAsync"
+              placeholder="@Placeholder"
+              disabled="@EffectiveDisabled"
+              readonly="@EffectiveReadOnly"
+              @attributes="UserAttributes"></textarea>
+}
+else
+{
+    <textarea class="@InputClass"
+              style="@BuildStyle()"
+              rows="@Rows"
+              @bind="_currentValue"
+              @bind:event="onchange"
+              @bind:after="NotifyChangedAsync"
+              placeholder="@Placeholder"
+              disabled="@EffectiveDisabled"
+              readonly="@EffectiveReadOnly"
+              @attributes="UserAttributes"></textarea>
+}
+
+@code {
+    [Parameter] public int Rows { get; set; } = 3;
+    [Parameter] public bool Immediate { get; set; } = true;
+    [Parameter] public SbsBindMode? BindMode { get; set; }
+    /// <summary>Legacy string attribute absorbed cleanly so DevExpress-style BindValueMode="..." neither fails Razor compilation nor leaks into HTML.</summary>
+    [Parameter] public string? BindValueMode { get; set; }
+
+    private string? _currentValue;
+    private string? _lastParameterValue;
+
+    private bool IsImmediate
+    {
+        get
+        {
+            if (BindMode.HasValue)
+                return BindMode.Value == SbsBindMode.OnInput;
+
+            if (!string.IsNullOrWhiteSpace(BindValueMode))
+            {
+                if (BindValueMode.EndsWith("OnChange", StringComparison.OrdinalIgnoreCase)
+                    || BindValueMode.EndsWith("OnLostFocus", StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                if (BindValueMode.EndsWith("OnInput", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return Immediate;
+        }
+    }
+
+    private string InputClass => BuildClass(
+        CreateCssBuilder("sbs-input")
+            .AddClass("sbs-input-invalid", IsInvalid));
+
+    protected override bool HasValue() => !string.IsNullOrWhiteSpace(_currentValue);
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (Value != _lastParameterValue)
+        {
+            _lastParameterValue = Value;
+            _currentValue = Value;
+        }
+    }
+
+    private async Task NotifyChangedAsync()
+    {
+        // Keep the same textarea element and buffered value so mid-text typing never moves the caret.
+        await NotifyValueChangedAsync(_currentValue);
+    }
+}

@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Sobis.UI/Sobis.UI.csproj" />
+    <Project Path="src/Sobis.UI.Docs/Sobis.UI.Docs.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Sobis.UI.Tests/Sobis.UI.Tests.csproj" />
+  </Folder>
+</Solution>

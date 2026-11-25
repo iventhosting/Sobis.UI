@@ -1,0 +1,116 @@
+@page "/"
+@page "/kurulum"
+
+<PageTitle>Sobis.UI — Kurulum & Başlangıç</PageTitle>
+
+<SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Md">
+    <SbsCard Title="Sobis.UI — .NET 10 Blazor Bileşen Kütüphanesi"
+             Subtitle="Sobis Bilgi Teknolojileri Sistemleri • Sıfır div, sıfır Bootstrap, tam Koyu/Açık tema"
+             Icon="fa-solid fa-layer-group">
+        <SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Sm">
+            <SbsAlert Severity="SbsAlertSeverity.Info"
+                      Title="Gerçek Blazor WebAssembly Canlı Dokümantasyon"
+                      Text="Bu portal doğrudan Sobis.UI RCL bileşenleriyle (sıfır ham div) derlenmiştir. Her bileşen sayfasında Canlı Demo, Kodu Gör (Razor / C#) ve API Parametreleri sekmelerini inceleyebilirsiniz." />
+            <SbsGridLayout Columns="3" Gap="SbsSpacing.Sm">
+                <SbsCard Title="48 Bileşen" Subtitle="Layout, Form, Input, DataGrid, Navigation, Overlay" Icon="fa fa-cubes" Outlined="true" Padding="SbsSpacing.Sm" />
+                <SbsCard Title="Sıfır Bootstrap" Subtitle="Saf --sbs-* CSS tasarım token'ları, Koyu & Açık tema" Icon="fa fa-paintbrush" Outlined="true" Padding="SbsSpacing.Sm" />
+                <SbsCard Title="Türkçe Duyarlı" Subtitle="İ/ı/Ş/ş/Ğ/ğ/Ö/ö/Ü/ü/Ç/ç uyumlu arama ve klavye gezintisi" Icon="fa fa-language" Outlined="true" Padding="SbsSpacing.Sm" />
+            </SbsGridLayout>
+        </SbsStack>
+    </SbsCard>
+
+    <SbsGridLayout Columns="2" Gap="SbsSpacing.Md">
+        <DemoSection Title="1. NuGet Kurulumu" Subtitle="Projeye Sobis.UI paketini ekleyin" Icon="fa fa-box-open"
+                     PrimaryCodeTab="CLI / .csproj"
+                     RazorCode="@InstallCli" />
+
+        <DemoSection Title="2. Servis Kaydı (Program.cs)" Subtitle="AddSbsUI() ve opsiyonel adaptörler" Icon="fa fa-gears"
+                     PrimaryCodeTab="Program.cs"
+                     RazorCode="@InstallProgram" />
+
+        <DemoSection Title="3. CSS & JS Varlıkları (App.razor / index.html)" Subtitle="Tek CSS + tek JS bağlantısı" Icon="fa fa-file-code"
+                     PrimaryCodeTab="App.razor / index.html"
+                     RazorCode="@InstallAssets" />
+
+        <DemoSection Title="4. Namespace & Global Hostlar" Subtitle="_Imports.razor ve MainLayout.razor" Icon="fa fa-layer-group"
+                     PrimaryCodeTab="Razor"
+                     RazorCode="@InstallHosts" />
+    </SbsGridLayout>
+
+    <DemoSection Title="5. Sıfır-Div Kurumsal CRUD Sayfa Şablonu"
+                 Subtitle="Arama + Form + DataGrid + Yetki (ClaimCode) + Zorunlu Alan akışı"
+                 Icon="fa fa-wand-magic-sparkles"
+                 PrimaryCodeTab="Birimler.razor"
+                 RazorCode="@CrudTemplate" />
+</SbsStack>
+
+@code {
+    private const string InstallCli = """
+        # .NET CLI
+        dotnet add package Sobis.UI
+
+        # veya .csproj içinde
+        <PackageReference Include="Sobis.UI" Version="1.0.0" />
+        """;
+
+    private const string InstallProgram = """
+        using Sobis.UI;
+
+        // Opsiyonel: Kendi yetki & çoklu dil adaptörlerinizi kaydedin
+        builder.Services.AddScoped<ISbsAuthorizationProvider, MyAuthProvider>();
+        builder.Services.AddScoped<ISbsLocalizer, MyLocalizer>();
+
+        builder.Services.AddSbsUI(options =>
+        {
+            options.DefaultToastPosition = SbsToastPosition.TopRight;
+            options.DefaultToastShowCloseButton = true;
+            options.DefaultTheme = "dark";
+        });
+        """;
+
+    private const string InstallAssets = """
+        <!-- <head> içine -->
+        <link rel="stylesheet" href="_content/Sobis.UI/css/sobis-ui.css" />
+        <link rel="stylesheet" href="YourApp.styles.css" />
+
+        <!-- <body> kapanışından önce -->
+        <script src="_content/Sobis.UI/js/sobis-ui.js"></script>
+        """;
+
+    private const string InstallHosts = """
+        @* _Imports.razor *@
+        @using Sobis.UI
+
+        @* MainLayout.razor *@
+        <SbsToastContainer />
+        <SbsConfirmDialog />
+        <SbsDialogProvider />
+        """;
+
+    private const string CrudTemplate = """
+        <SbsPage Busy="LocalBusy" RequiredFields="@(FormEnabled ? ZorunluAlanlar : null)">
+            <SbsToolbar>
+                <SbsButton Text="Sorgula (F8)" Icon="fa fa-search" Variant="primary" OnClick="OnSearchAsync" />
+                <SbsToolbarDivider />
+                <SbsButton Text="Yeni (F2)" Icon="fa fa-file" Variant="ghost" ClaimCode="Birim.Create" OnClick="OnNewAsync" />
+                <SbsButton Text="Kaydet (F3)" Icon="fa fa-save" Variant="save" ClaimCode="Birim.Create,Birim.Update" OnClick="OnSaveAsync" />
+            </SbsToolbar>
+
+            <SbsGridLayout Columns="1fr 2fr" Gap="SbsSpacing.Sm">
+                <SbsFormGroup Caption="Arama Kriterleri" Icon="fa fa-search">
+                    <SbsField Label="Birim Adı"><SbsTextBox @bind-Value="Search.Filter" Immediate="true" /></SbsField>
+                </SbsFormGroup>
+                <SbsFormGroup Caption="Birim Bilgisi" Icon="fa fa-list" Disabled="@(!FormEnabled)">
+                    <SbsField Label="Birim Adı" Required="true"><SbsTextBox @bind-Value="FormData.Ad" /></SbsField>
+                </SbsFormGroup>
+            </SbsGridLayout>
+
+            <SbsGrid TItem="BirimDto" Data="@GridData" FillHeight="true" PageSize="50"
+                     ShowEditAction="true" ShowDeleteAction="true"
+                     OnEditClick="OnEditRowAsync" OnDeleteClick="OnDeleteRowAsync">
+                <SbsGridColumn TItem="BirimDto" Field="@nameof(BirimDto.BirimKod)" Caption="Kod" Width="110px" />
+                <SbsGridColumn TItem="BirimDto" Field="@nameof(BirimDto.Ad)" Caption="Birim Adı" />
+            </SbsGrid>
+        </SbsPage>
+        """;
+}

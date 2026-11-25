@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="1200" height="320">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141724"/>
+      <stop offset="55%" stop-color="#1c1f2e"/>
+      <stop offset="100%" stop-color="#272c47"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F8A045"/>
+      <stop offset="100%" stop-color="#e8922d"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F8A045" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#F8A045" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="320" rx="18" fill="url(#bg)"/>
+  <circle cx="1040" cy="70" r="210" fill="url(#glow)"/>
+  <rect x="2" y="2" width="1196" height="316" rx="16" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="2"/>
+
+  <!-- Logo Mark -->
+  <rect x="76" y="78" width="112" height="112" rx="24" fill="#252840" stroke="url(#accent)" stroke-width="3.5"/>
+  <text x="132" y="156" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="68" font-weight="800" fill="url(#accent)">S</text>
+
+  <!-- Title & Tagline -->
+  <text x="220" y="130" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="54" font-weight="800" fill="#e8eaf0" letter-spacing="-1">Sobis.UI</text>
+  <rect x="462" y="92" width="84" height="30" rx="15" fill="rgba(248,160,69,0.16)" stroke="rgba(248,160,69,0.45)" stroke-width="1.2"/>
+  <text x="504" y="112" text-anchor="middle" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="14" font-weight="700" fill="#F8A045">v1.0.0</text>
+
+  <text x="222" y="170" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="21" font-weight="500" fill="#a8b1c6">
+    Enterprise .NET 10 Blazor UI Component Library
+  </text>
+  <text x="222" y="202" font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="15" font-weight="500" fill="#8890a4">
+    Sobis Bilgi Teknolojileri Sistemleri  •  www.sobistech.com
+  </text>
+
+  <!-- Feature Pills -->
+  <g font-family="Inter, Segoe UI, system-ui, sans-serif" font-size="13" font-weight="600">
+    <rect x="76" y="238" width="142" height="34" rx="8" fill="#252840" stroke="rgba(255,255,255,0.1)"/>
+    <text x="147" y="260" text-anchor="middle" fill="#34d399">●  48 Components</text>
+
+    <rect x="232" y="238" width="128" height="34" rx="8" fill="#252840" stroke="rgba(255,255,255,0.1)"/>
+    <text x="296" y="260" text-anchor="middle" fill="#F8A045">Zero-Div Layout</text>
+
+    <rect x="374" y="238" width="146" height="34" rx="8" fill="#252840" stroke="rgba(255,255,255,0.1)"/>
+    <text x="447" y="260" text-anchor="middle" fill="#60a5fa">Zero Bootstrap</text>
+
+    <rect x="534" y="238" width="154" height="34" rx="8" fill="#252840" stroke="rgba(255,255,255,0.1)"/>
+    <text x="611" y="260" text-anchor="middle" fill="#e8eaf0">Dark &amp; Light Theme</text>
+
+    <rect x="702" y="238" width="166" height="34" rx="8" fill="#252840" stroke="rgba(255,255,255,0.1)"/>
+    <text x="785" y="260" text-anchor="middle" fill="#fbbf24">Blazor Server &amp; WASM</text>
+  </g>
+</svg>

@@ -1,0 +1,36 @@
+.sbs-grid-fill {
+    flex: 1 1 auto;
+    min-height: 200px;
+}
+
+.sbs-grid-auto {
+    flex: 0 0 auto;
+    min-height: auto;
+}
+
+.sbs-grid-exports {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sbs-space-sm);
+}
+
+.sbs-grid-action-col {
+    width: 50px;
+    text-align: center;
+}
+
+.sbs-grid-status-active {
+    color: var(--sbs-success);
+    font-size: var(--sbs-fs-lg);
+}
+
+.sbs-grid-status-passive {
+    color: var(--sbs-danger);
+    font-size: var(--sbs-fs-lg);
+}
+
+::deep .sbs-grid-pager-btn {
+    padding: 4px 9px;
+    height: var(--sbs-btn-h-sm);
+    font-size: 10px;
+}

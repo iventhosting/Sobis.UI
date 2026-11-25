@@ -1,0 +1,104 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<div class="@RootClass" style="@RootStyle" @attributes="UserAttributes">
+    @if (HasHeader)
+    {
+        <div class="sbs-card-header">
+            @if (HeaderContent is not null)
+            {
+                @HeaderContent
+            }
+            else
+            {
+                <div class="sbs-card-header-main">
+                    @if (!string.IsNullOrWhiteSpace(Icon))
+                    {
+                        <span class="sbs-card-icon"><i class="@Icon" aria-hidden="true"></i></span>
+                    }
+                    <div class="sbs-card-titles">
+                        @if (!string.IsNullOrWhiteSpace(Title))
+                        {
+                            <div class="sbs-card-title">@Title</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Subtitle))
+                        {
+                            <div class="sbs-card-subtitle">@Subtitle</div>
+                        }
+                    </div>
+                </div>
+            }
+            @if (HeaderActions is not null)
+            {
+                <div class="sbs-card-actions">
+                    @HeaderActions
+                </div>
+            }
+        </div>
+    }
+
+    <div class="sbs-card-body" style="@BodyStyle">
+        @ChildContent
+    </div>
+
+    @if (FooterContent is not null)
+    {
+        <div class="sbs-card-footer">
+            @FooterContent
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>Primary card heading.</summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>Optional muted subtitle displayed beneath Title.</summary>
+    [Parameter] public string? Subtitle { get; set; }
+
+    /// <summary>Optional icon CSS class shown in the header.</summary>
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>Optional custom header content replacing the default icon/title block.</summary>
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+
+    /// <summary>Optional action buttons or badges aligned to the right of the header.</summary>
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
+
+    /// <summary>Optional footer content rendered below the body.</summary>
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+
+    /// <summary>Body inner padding token. Defaults to Md (12px).</summary>
+    [Parameter] public SbsSpacing Padding { get; set; } = SbsSpacing.Md;
+
+    /// <summary>Shows a 1px surface border. Defaults to true.</summary>
+    [Parameter] public bool Outlined { get; set; } = true;
+
+    /// <summary>Applies an elevated drop shadow.</summary>
+    [Parameter] public bool Elevated { get; set; }
+
+    /// <summary>Stretches the card to fill its container height.</summary>
+    [Parameter] public bool FillHeight { get; set; }
+
+    /// <summary>Card body content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool HasHeader =>
+        HeaderContent is not null ||
+        HeaderActions is not null ||
+        !string.IsNullOrWhiteSpace(Title) ||
+        !string.IsNullOrWhiteSpace(Subtitle) ||
+        !string.IsNullOrWhiteSpace(Icon);
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-card")
+            .AddClass("sbs-card-outlined", Outlined)
+            .AddClass("sbs-card-elevated", Elevated)
+            .AddClass("sbs-card-fill", FillHeight));
+
+    private string? RootStyle => BuildStyle();
+
+    private string? BodyStyle => StyleBuilder.Empty()
+        .AddStyle("padding", Padding.ToCssVar())
+        .Build();
+}

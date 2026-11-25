@@ -1,0 +1,49 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+@if (Orientation == SbsOrientation.Vertical)
+{
+    <span class="@RootClass" style="@RootStyle" role="separator" aria-orientation="vertical" @attributes="UserAttributes"></span>
+}
+else if (!string.IsNullOrWhiteSpace(Text))
+{
+    <div class="@RootClass" style="@RootStyle" role="separator" aria-orientation="horizontal" @attributes="UserAttributes">
+        <span class="sbs-divider-line sbs-divider-line-before"></span>
+        <span class="sbs-divider-text">@Text</span>
+        <span class="sbs-divider-line sbs-divider-line-after"></span>
+    </div>
+}
+else
+{
+    <hr class="@RootClass" style="@RootStyle" role="separator" aria-orientation="horizontal" @attributes="UserAttributes" />
+}
+
+@code {
+    /// <summary>Horizontal (default) or Vertical divider orientation.</summary>
+    [Parameter] public SbsOrientation Orientation { get; set; } = SbsOrientation.Horizontal;
+
+    /// <summary>Optional label displayed inline within a horizontal divider.</summary>
+    [Parameter] public string? Text { get; set; }
+
+    /// <summary>Horizontal placement of optional Text (Left, Center, Right).</summary>
+    [Parameter] public SbsTextAlign TextAlign { get; set; } = SbsTextAlign.Center;
+
+    /// <summary>Outer margin spacing around the divider.</summary>
+    [Parameter] public SbsSpacing Spacing { get; set; } = SbsSpacing.Sm;
+
+    /// <summary>Uses a dashed line style instead of solid.</summary>
+    [Parameter] public bool Dashed { get; set; }
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-divider")
+            .AddClass("sbs-divider-vertical", Orientation == SbsOrientation.Vertical)
+            .AddClass("sbs-divider-horizontal", Orientation == SbsOrientation.Horizontal && string.IsNullOrWhiteSpace(Text))
+            .AddClass("sbs-divider-with-text", Orientation == SbsOrientation.Horizontal && !string.IsNullOrWhiteSpace(Text))
+            .AddClass($"sbs-divider-align-{TextAlign.ToCss()}", !string.IsNullOrWhiteSpace(Text))
+            .AddClass("sbs-divider-dashed", Dashed));
+
+    private string? RootStyle => BuildStyle(
+        CreateStyleBuilder()
+            .AddStyle("margin-block", Spacing.ToCssVar(), Orientation == SbsOrientation.Horizontal)
+            .AddStyle("margin-inline", Spacing.ToCssVar(), Orientation == SbsOrientation.Vertical));
+}

@@ -1,0 +1,191 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@inject IServiceProvider ServiceProvider
+
+<div class="@RootClass" style="@RootStyle" @attributes="UserAttributes">
+    <div class="sbs-tabs-header">
+        <div class="sbs-tabs-bar" role="tablist">
+            @for (var i = 0; i < _panels.Count; i++)
+            {
+                var panel = _panels[i];
+                var index = i;
+                var active = IsPanelActive(panel, index);
+                <button type="button"
+                        class="@GetTabClass(panel, active)"
+                        role="tab"
+                        aria-selected="@active.ToString().ToLowerInvariant()"
+                        aria-disabled="@panel.Disabled.ToString().ToLowerInvariant()"
+                        disabled="@panel.Disabled"
+                        @onclick="() => SelectPanelAsync(panel, index)">
+                    @if (panel.TitleTemplate is not null)
+                    {
+                        @panel.TitleTemplate
+                    }
+                    else
+                    {
+                        @if (!string.IsNullOrWhiteSpace(panel.Icon))
+                        {
+                            <i class="@panel.Icon sbs-tab-icon" aria-hidden="true"></i>
+                        }
+                        <span class="sbs-tab-title">@panel.Title</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(panel.Badge))
+                    {
+                        <SbsBadge Text="@panel.Badge" Color="@panel.BadgeColor" Size="SbsSize.Xs" />
+                    }
+                    @if (panel.Closable && !panel.Disabled)
+                    {
+                        <span class="sbs-tab-close"
+                              role="button"
+                              tabindex="0"
+                              aria-label="@CloseLabel"
+                              @onclick="() => ClosePanelAsync(panel)"
+                              @onclick:stopPropagation="true">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                        </span>
+                    }
+                </button>
+            }
+        </div>
+        @if (HeaderExtra is not null)
+        {
+            <div class="sbs-tabs-extra">
+                @HeaderExtra
+            </div>
+        }
+    </div>
+
+    <div class="sbs-tabs-body">
+        <CascadingValue Value="this" IsFixed="true">
+            @ChildContent
+        </CascadingValue>
+    </div>
+</div>
+
+@code {
+    /// <summary>Zero-based index of the currently active tab panel.</summary>
+    [Parameter] public int ActiveIndex { get; set; }
+
+    /// <summary>Two-way binding callback for ActiveIndex.</summary>
+    [Parameter] public EventCallback<int> ActiveIndexChanged { get; set; }
+
+    /// <summary>Optional string key matching SbsTabPanel.Key to control active tab by key.</summary>
+    [Parameter] public string? ActiveKey { get; set; }
+
+    /// <summary>Two-way binding callback for ActiveKey.</summary>
+    [Parameter] public EventCallback<string?> ActiveKeyChanged { get; set; }
+
+    /// <summary>Tab bar visual style (Line, Pill, Card).</summary>
+    [Parameter] public SbsTabsVariant Variant { get; set; } = SbsTabsVariant.Line;
+
+    /// <summary>When true, keeps inactive tab panels mounted in the DOM (hidden via CSS) to preserve state.</summary>
+    [Parameter] public bool KeepAlive { get; set; }
+
+    /// <summary>Stretches the tab container and active panel to fill remaining vertical flex space.</summary>
+    [Parameter] public bool FillHeight { get; set; }
+
+    /// <summary>Compact tab button padding.</summary>
+    [Parameter] public bool Dense { get; set; }
+
+    /// <summary>Callback invoked when a closable tab panel's close button is clicked.</summary>
+    [Parameter] public EventCallback<SbsTabPanel> OnTabClose { get; set; }
+
+    /// <summary>Optional trailing content placed on the right side of the tab bar.</summary>
+    [Parameter] public RenderFragment? HeaderExtra { get; set; }
+
+    /// <summary>One or more SbsTabPanel children.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private readonly List<SbsTabPanel> _panels = new();
+
+    private string CloseLabel
+    {
+        get
+        {
+            var localizer = ServiceProvider.GetService(typeof(ISbsLocalizer)) as ISbsLocalizer;
+            return localizer?[SbsLocalizerKeys.Close] ?? "Kapat";
+        }
+    }
+
+    internal void RegisterPanel(SbsTabPanel panel)
+    {
+        if (!_panels.Contains(panel))
+        {
+            _panels.Add(panel);
+            StateHasChanged();
+        }
+    }
+
+    internal void UnregisterPanel(SbsTabPanel panel)
+    {
+        if (_panels.Remove(panel))
+        {
+            if (ActiveIndex >= _panels.Count && _panels.Count > 0)
+            {
+                ActiveIndex = _panels.Count - 1;
+            }
+            StateHasChanged();
+        }
+    }
+
+    internal void NotifyPanelChanged()
+    {
+        StateHasChanged();
+    }
+
+    internal bool IsPanelActive(SbsTabPanel panel)
+    {
+        var index = _panels.IndexOf(panel);
+        return index >= 0 && IsPanelActive(panel, index);
+    }
+
+    private bool IsPanelActive(SbsTabPanel panel, int index)
+    {
+        if (!string.IsNullOrWhiteSpace(ActiveKey))
+            return string.Equals(panel.Key, ActiveKey, StringComparison.OrdinalIgnoreCase);
+
+        var clamped = _panels.Count == 0 ? 0 : Math.Clamp(ActiveIndex, 0, _panels.Count - 1);
+        return index == clamped;
+    }
+
+    private async Task SelectPanelAsync(SbsTabPanel panel, int index)
+    {
+        if (panel.Disabled)
+            return;
+
+        ActiveIndex = index;
+        if (ActiveIndexChanged.HasDelegate)
+            await ActiveIndexChanged.InvokeAsync(index);
+
+        if (!string.IsNullOrWhiteSpace(panel.Key) || ActiveKeyChanged.HasDelegate)
+        {
+            ActiveKey = panel.Key;
+            if (ActiveKeyChanged.HasDelegate)
+                await ActiveKeyChanged.InvokeAsync(ActiveKey);
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ClosePanelAsync(SbsTabPanel panel)
+    {
+        if (panel.OnClose.HasDelegate)
+            await panel.OnClose.InvokeAsync();
+
+        if (OnTabClose.HasDelegate)
+            await OnTabClose.InvokeAsync(panel);
+    }
+
+    private string GetTabClass(SbsTabPanel panel, bool active) => CssBuilder.Default("sbs-tab-btn")
+        .AddClass("sbs-tab-btn-active", active)
+        .AddClass("sbs-tab-btn-disabled", panel.Disabled)
+        .ToString();
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-tabs")
+            .AddClass($"sbs-tabs-{Variant.ToCss()}")
+            .AddClass("sbs-tabs-dense", Dense)
+            .AddClass("sbs-tabs-fill", FillHeight));
+
+    private string? RootStyle => BuildStyle();
+}

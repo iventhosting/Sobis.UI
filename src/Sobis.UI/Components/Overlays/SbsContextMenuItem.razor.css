@@ -1,0 +1,49 @@
+.sbs-ctx-item {
+    padding: var(--sbs-space-sm) var(--sbs-space-lg);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--sbs-space-sm);
+    color: var(--sbs-text);
+    transition: background var(--sbs-transition-fast);
+}
+
+.sbs-ctx-item:hover:not(.sbs-ctx-disabled) {
+    background: var(--sbs-surface-hover);
+}
+
+.sbs-ctx-item i {
+    width: 14px;
+    text-align: center;
+    color: var(--sbs-text-muted);
+}
+
+.sbs-ctx-item.sbs-ctx-danger,
+.sbs-ctx-item.sbs-ctx-danger i {
+    color: var(--sbs-danger);
+}
+
+.sbs-ctx-item.sbs-ctx-success,
+.sbs-ctx-item.sbs-ctx-success i {
+    color: var(--sbs-success);
+}
+
+.sbs-ctx-item.sbs-ctx-warning,
+.sbs-ctx-item.sbs-ctx-warning i {
+    color: var(--sbs-warning);
+}
+
+.sbs-ctx-item.sbs-ctx-info,
+.sbs-ctx-item.sbs-ctx-info i {
+    color: var(--sbs-info);
+}
+
+.sbs-ctx-item.sbs-ctx-primary,
+.sbs-ctx-item.sbs-ctx-primary i {
+    color: var(--sbs-accent);
+}
+
+.sbs-ctx-item.sbs-ctx-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

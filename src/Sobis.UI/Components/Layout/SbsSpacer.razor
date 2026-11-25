@@ -1,0 +1,19 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<span class="@RootClass" style="@RootStyle" aria-hidden="true" @attributes="UserAttributes"></span>
+
+@code {
+    /// <summary>Optional minimum width for horizontal spacing.</summary>
+    [Parameter] public string? MinWidth { get; set; }
+
+    /// <summary>Optional minimum height for vertical spacing.</summary>
+    [Parameter] public string? MinHeight { get; set; }
+
+    private string RootClass => BuildClass("sbs-spacer");
+
+    private string? RootStyle => BuildStyle(
+        CreateStyleBuilder()
+            .AddStyle("min-width", MinWidth, !string.IsNullOrWhiteSpace(MinWidth))
+            .AddStyle("min-height", MinHeight, !string.IsNullOrWhiteSpace(MinHeight)));
+}

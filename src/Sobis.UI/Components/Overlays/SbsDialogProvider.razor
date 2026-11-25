@@ -1,0 +1,57 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@implements IDisposable
+@inject ISbsDialogService DialogService
+
+@foreach (var dialog in _dialogs)
+{
+    var activeDialog = dialog;
+    <SbsModal @key="activeDialog.Id"
+              Visible="true"
+              Title="@activeDialog.Title"
+              Icon="@(activeDialog.Options.Icon ?? string.Empty)"
+              ModalSize="@activeDialog.Options.Size"
+              ShowCloseButton="@activeDialog.Options.ShowCloseButton"
+              CloseOnBackdrop="@activeDialog.Options.CloseOnBackdrop"
+              CssClass="@activeDialog.Options.CssClass"
+              Style="@activeDialog.Options.Style"
+              OnClose="@(() => activeDialog.Cancel())">
+        <CascadingValue Value="activeDialog" IsFixed="true">
+            <DynamicComponent Type="@activeDialog.ComponentType"
+                              Parameters="@BuildParameters(activeDialog)" />
+        </CascadingValue>
+    </SbsModal>
+}
+
+@code {
+    private IReadOnlyList<SbsDialogInstance> _dialogs = Array.Empty<SbsDialogInstance>();
+
+    protected override void OnInitialized()
+    {
+        _dialogs = DialogService.ActiveDialogs;
+        DialogService.OnDialogsChanged += HandleDialogsChanged;
+    }
+
+    private void HandleDialogsChanged()
+    {
+        _dialogs = DialogService.ActiveDialogs;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private static IDictionary<string, object>? BuildParameters(SbsDialogInstance dialog)
+    {
+        if (dialog.Parameters.Count == 0)
+            return null;
+
+        var dict = new Dictionary<string, object>(dialog.Parameters.Count, StringComparer.Ordinal);
+        foreach (var kv in dialog.Parameters)
+            dict[kv.Key] = kv.Value!;
+
+        return dict;
+    }
+
+    public void Dispose()
+    {
+        DialogService.OnDialogsChanged -= HandleDialogsChanged;
+    }
+}

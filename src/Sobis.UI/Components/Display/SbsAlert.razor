@@ -1,0 +1,111 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+@inject IServiceProvider ServiceProvider
+
+@if (!_dismissed)
+{
+    <div class="@RootClass" style="@RootStyle" role="alert" @attributes="UserAttributes">
+        @if (ShowIcon && !string.IsNullOrWhiteSpace(EffectiveIcon))
+        {
+            <span class="sbs-alert-icon" aria-hidden="true">
+                <i class="@EffectiveIcon"></i>
+            </span>
+        }
+        <div class="sbs-alert-content">
+            @if (!string.IsNullOrWhiteSpace(Title))
+            {
+                <div class="sbs-alert-title">@Title</div>
+            }
+            @if (ChildContent is not null)
+            {
+                <div class="sbs-alert-body">@ChildContent</div>
+            }
+            else if (!string.IsNullOrWhiteSpace(Text))
+            {
+                <div class="sbs-alert-body">@Text</div>
+            }
+        </div>
+        @if (ActionContent is not null)
+        {
+            <div class="sbs-alert-actions">
+                @ActionContent
+            </div>
+        }
+        @if (Dismissible)
+        {
+            <button type="button" class="sbs-alert-close" aria-label="@CloseLabel" @onclick="DismissAsync">
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>Alert visual severity (Info, Success, Warning, Danger).</summary>
+    [Parameter] public SbsAlertSeverity Severity { get; set; } = SbsAlertSeverity.Info;
+
+    /// <summary>Optional bold title line.</summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>Optional message text when ChildContent is not provided.</summary>
+    [Parameter] public string? Text { get; set; }
+
+    /// <summary>Optional icon override. Defaults to a semantic icon for the current Severity.</summary>
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>Controls whether the leading icon is rendered. Defaults to true.</summary>
+    [Parameter] public bool ShowIcon { get; set; } = true;
+
+    /// <summary>Shows a close button that hides the alert and triggers OnDismiss.</summary>
+    [Parameter] public bool Dismissible { get; set; }
+
+    /// <summary>Callback invoked when the user dismisses the alert.</summary>
+    [Parameter] public EventCallback OnDismiss { get; set; }
+
+    /// <summary>Compact padding suitable for inline form hints and warnings.</summary>
+    [Parameter] public bool Dense { get; set; }
+
+    /// <summary>Renders with a transparent background and stronger semantic border.</summary>
+    [Parameter] public bool Outlined { get; set; }
+
+    /// <summary>Optional trailing action slot (e.g. an SbsButton).</summary>
+    [Parameter] public RenderFragment? ActionContent { get; set; }
+
+    /// <summary>Alert body content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private bool _dismissed;
+
+    private string EffectiveIcon => !string.IsNullOrWhiteSpace(Icon)
+        ? Icon
+        : Severity switch
+        {
+            SbsAlertSeverity.Success => "fa-solid fa-circle-check",
+            SbsAlertSeverity.Warning => "fa-solid fa-triangle-exclamation",
+            SbsAlertSeverity.Danger => "fa-solid fa-circle-exclamation",
+            _ => "fa-solid fa-circle-info"
+        };
+
+    private string CloseLabel
+    {
+        get
+        {
+            var localizer = ServiceProvider.GetService(typeof(ISbsLocalizer)) as ISbsLocalizer;
+            return localizer?[SbsLocalizerKeys.Close] ?? "Kapat";
+        }
+    }
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-alert")
+            .AddClass($"sbs-alert-{Severity.ToCss()}")
+            .AddClass("sbs-alert-dense", Dense)
+            .AddClass("sbs-alert-outlined", Outlined));
+
+    private string? RootStyle => BuildStyle();
+
+    private async Task DismissAsync()
+    {
+        _dismissed = true;
+        await OnDismiss.InvokeAsync();
+    }
+}

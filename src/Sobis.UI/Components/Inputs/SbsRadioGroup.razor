@@ -1,0 +1,50 @@
+@namespace Sobis.UI
+@typeparam TValue
+@inherits SbsInputBase<TValue>
+
+<div class="@GroupClass" style="@BuildStyle()" role="radiogroup" @attributes="UserAttributes">
+    @if (Data is not null)
+    {
+        @foreach (var item in Data)
+        {
+            var v = item;
+            var isChecked = EqualityComparer<TValue>.Default.Equals(Value, v);
+            <label class="sbs-radio-label @(EffectiveDisabled ? "sbs-radio-disabled" : "")">
+                <input type="radio"
+                       class="sbs-radio"
+                       name="@_groupName"
+                       checked="@isChecked"
+                       disabled="@EffectiveDisabled"
+                       @onchange="@(() => OnChangeAsync(v))" />
+                <span>@(TextGetter?.Invoke(v) ?? v?.ToString())</span>
+            </label>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public IEnumerable<TValue>? Data { get; set; }
+    [Parameter] public Func<TValue, string>? TextGetter { get; set; }
+    [Parameter] public string Orientation { get; set; } = "horizontal";
+    [Parameter] public SbsOrientation? OrientationMode { get; set; }
+
+    private readonly string _groupName = $"rg-{Guid.NewGuid():N}";
+
+    private bool IsVertical => OrientationMode.HasValue
+        ? OrientationMode.Value == SbsOrientation.Vertical
+        : string.Equals(Orientation, "vertical", StringComparison.OrdinalIgnoreCase);
+
+    private string GroupClass => BuildClass(
+        CreateCssBuilder("sbs-radio-group")
+            .AddClass("sbs-radio-vertical", IsVertical)
+            .AddClass("sbs-radio-horizontal", !IsVertical)
+            .AddClass("sbs-radio-invalid", IsInvalid));
+
+    private async Task OnChangeAsync(TValue v)
+    {
+        if (EffectiveDisabled || EffectiveReadOnly)
+            return;
+
+        await NotifyValueChangedAsync(v);
+    }
+}

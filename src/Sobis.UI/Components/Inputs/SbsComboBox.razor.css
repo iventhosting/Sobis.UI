@@ -1,0 +1,25 @@
+.sbs-combo-search-wrap {
+    padding: 6px;
+    border-bottom: 1px solid var(--sbs-border);
+    position: relative;
+}
+
+.sbs-combo-search-input {
+    width: 100%;
+    padding-right: 25px;
+    font-size: var(--sbs-fs-xs);
+}
+
+.sbs-combo-search-clear {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: var(--sbs-text-muted);
+    font-size: var(--sbs-fs-sm);
+}
+
+.sbs-combo-search-clear:hover {
+    color: var(--sbs-danger);
+}

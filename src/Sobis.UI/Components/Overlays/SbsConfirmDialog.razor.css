@@ -1,0 +1,25 @@
+.sbs-confirm-body {
+    padding: var(--sbs-space-sm) var(--sbs-space-xs);
+    color: var(--sbs-text);
+    font-size: var(--sbs-fs-md);
+    line-height: var(--sbs-lh-normal);
+}
+
+.sbs-confirm-message {
+    word-break: break-word;
+}
+
+.sbs-confirm-submessage {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: var(--sbs-space-sm);
+    color: var(--sbs-danger);
+    font-size: var(--sbs-fs-sm);
+    opacity: 0.9;
+}
+
+.sbs-confirm-submessage i {
+    margin-top: 2px;
+    flex-shrink: 0;
+}

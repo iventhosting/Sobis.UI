@@ -1,0 +1,110 @@
+@page "/inputs"
+
+<PageTitle>Sobis.UI — Giriş Kontrolleri</PageTitle>
+
+<SbsStack Direction="SbsDirection.Column" Gap="SbsSpacing.Md">
+    <DemoSection Title="12 Giriş Kontrolü (SbsInputBase<T>)"
+                 Subtitle="Metin, telefon, tarih (264px + yukarı açılma), sayı, Türkçe aramalı seçim kutuları, anahtar ve dosya yükleme"
+                 Icon="fa fa-keyboard"
+                 RazorCode="@InputsRazor"
+                 ApiParams="@InputsApi">
+        <DemoContent>
+            <CascadingValue Name="CascadedRequiredFields" Value="_required" IsFixed="false">
+                <SbsGridLayout Columns="2" Gap="SbsSpacing.Md">
+                    <SbsFormGroup Caption="Metin, Sayı ve Tarih" Icon="fa fa-pen-to-square">
+                        <SbsField Label="Ad Soyad" Required="true" HelpText="Zorunlu alan boşsa kırmızı vurgulanır">
+                            <SbsTextBox @bind-Value="_name" PropertyName="Name" />
+                        </SbsField>
+                        <SbsField Label="Telefon"><SbsPhoneBox @bind-Value="_phone" /></SbsField>
+                        <SbsField Label="Tarih"><SbsDateBox @bind-Value="_date" /></SbsField>
+                        <SbsField Label="Yaş"><SbsNumberBox TValue="int" @bind-Value="_age" Step="1" /></SbsField>
+                        <SbsField Label="Ücret"><SbsNumberBox TValue="decimal" @bind-Value="_salary" Step="250" /></SbsField>
+                        <SbsField Label="Not"><SbsTextArea @bind-Value="_bio" Rows="2" /></SbsField>
+                    </SbsFormGroup>
+
+                    <SbsFormGroup Caption="Seçim, Anahtar ve Dosya" Icon="fa fa-list-check">
+                        <SbsField Label="Birim (Türkçe Arama)" Required="true">
+                            <SbsComboBox TItem="Opt" TValue="int?" Data="_depts" ValueGetter="x => x.Id" TextGetter="x => x.Name"
+                                         @bind-Value="_deptId" PropertyName="DeptId" AllowSearch="true" />
+                        </SbsField>
+                        <SbsField Label="Yetkinlikler (MultiSelect)">
+                            <SbsMultiSelect TItem="Opt" TValue="int" Data="_skills" ValueGetter="x => x.Id" TextGetter="x => x.Name"
+                                            @bind-Values="_skillIds" AllowSearch="true" />
+                        </SbsField>
+                        <SbsField Label="Etiketler (TagBox)">
+                            <SbsTagBox TItem="Opt" TValue="int" Data="_skills" ValueGetter="x => x.Id" TextGetter="x => x.Name"
+                                       @bind-Values="_tagIds" MaxVisibleChips="3" />
+                        </SbsField>
+                        <SbsField Label="Çalışma Modeli">
+                            <SbsRadioGroup TValue="string" Data="_modes" @bind-Value="_mode" OrientationMode="SbsOrientation.Horizontal" />
+                        </SbsField>
+                        <SbsField Label="Durum">
+                            <SbsStack Direction="SbsDirection.Row" Wrap="true" Gap="SbsSpacing.Md" Align="SbsAlign.Center">
+                                <SbsCheckBox @bind-Checked="_active" Label="Aktif" />
+                                <SbsSwitch @bind-Checked="_notify" OnText="Açık" OffText="Kapalı" Color="SbsColor.Success" />
+                            </SbsStack>
+                        </SbsField>
+                        <SbsField Label="Dosya Yükle">
+                            <SbsFileUpload Multiple="true" MaxFileSize="5242880" Value="_files" OnFilesSelected="f => _files = f" />
+                        </SbsField>
+                    </SbsFormGroup>
+                </SbsGridLayout>
+            </CascadingValue>
+        </DemoContent>
+    </DemoSection>
+</SbsStack>
+
+@code {
+    private sealed record Opt(int Id, string Name);
+
+    private readonly HashSet<string> _required = ["Name", "DeptId"];
+    private string? _name = "Ayşe Şahin";
+    private string? _phone = "05321234567";
+    private DateTime? _date = DateTime.Today;
+    private int _age = 32;
+    private decimal _salary = 54250.50m;
+    private string? _bio = "Türkçe karakter destekli kurumsal form bileşenleri.";
+    private int? _deptId = 2;
+    private List<int> _skillIds = [1, 2, 3, 4];
+    private List<int> _tagIds = [1, 2, 3, 5];
+    private string _mode = "Hibrit";
+    private bool _active = true;
+    private bool _notify = true;
+    private IReadOnlyList<IBrowserFile> _files = [];
+
+    private readonly List<Opt> _depts =
+    [
+        new(1, "İnsan Kaynakları"), new(2, "Bilgi İşlem ve Yazılım"),
+        new(3, "Çankaya Sağlık Birimi"), new(4, "Öğrenci ve Eğitim İşleri")
+    ];
+    private readonly List<Opt> _skills =
+    [
+        new(1, "C# / .NET 10"), new(2, "Blazor"), new(3, "PostgreSQL"),
+        new(4, "CSS Token"), new(5, "REST API")
+    ];
+    private readonly List<string> _modes = ["Ofis", "Hibrit", "Uzaktan"];
+
+    private static readonly IReadOnlyList<ApiParamRow> InputsApi =
+    [
+        new("Value / ValueChanged", "TValue?", "default", "İki yönlü (@bind-Value) değer bağlama."),
+        new("Required", "bool", "false", "Boşken geçersiz kenarlık vurgusu (veya CascadedRequiredFields)."),
+        new("Disabled / ReadOnly", "bool", "false", "Kontrolü veya SbsFormContext üzerinden formu kilitler."),
+        new("AllowSearch", "bool", "false / true", "ComboBox/MultiSelect/TagBox içinde Türkçe duyarsız arama."),
+        new("MaxVisibleChips", "int", "3", "MultiSelect ve TagBox'ta tek satırda gösterilecek çip sayısı (+N özeti).")
+    ];
+
+    private const string InputsRazor = """
+        <SbsField Label="Ad Soyad" Required="true"><SbsTextBox @bind-Value="_name" /></SbsField>
+        <SbsField Label="Telefon"><SbsPhoneBox @bind-Value="_phone" /></SbsField>
+        <SbsField Label="Tarih"><SbsDateBox @bind-Value="_date" /></SbsField>
+        <SbsField Label="Birim">
+            <SbsComboBox TItem="Opt" TValue="int?" Data="_depts" ValueGetter="x => x.Id" TextGetter="x => x.Name"
+                         @bind-Value="_deptId" AllowSearch="true" />
+        </SbsField>
+        <SbsField Label="Etiketler">
+            <SbsTagBox TItem="Opt" TValue="int" Data="_skills" ValueGetter="x => x.Id" TextGetter="x => x.Name"
+                       @bind-Values="_tagIds" MaxVisibleChips="3" />
+        </SbsField>
+        <SbsSwitch @bind-Checked="_notify" OnText="Açık" OffText="Kapalı" Color="SbsColor.Success" />
+        """;
+}

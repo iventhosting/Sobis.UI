@@ -1,0 +1,66 @@
+@namespace Sobis.UI
+@inherits SbsComponentBase
+
+<span class="@RootClass" style="@RootStyle" @attributes="UserAttributes">
+    @if (Dot)
+    {
+        <span class="sbs-badge-dot" aria-hidden="true"></span>
+    }
+    @if (!string.IsNullOrWhiteSpace(Icon))
+    {
+        <i class="@Icon sbs-badge-icon" aria-hidden="true"></i>
+    }
+    @if (ChildContent is not null)
+    {
+        @ChildContent
+    }
+    else if (!string.IsNullOrEmpty(Text))
+    {
+        <span>@Text</span>
+    }
+</span>
+
+@code {
+    /// <summary>Badge text label.</summary>
+    [Parameter] public string? Text { get; set; }
+
+    /// <summary>Semantic color token.</summary>
+    [Parameter] public SbsColor Color { get; set; } = SbsColor.Default;
+
+    /// <summary>Visual style variant (Soft, Filled, Outlined).</summary>
+    [Parameter] public SbsVariant Variant { get; set; } = SbsVariant.Soft;
+
+    /// <summary>Badge size (Xs, Sm, Md, Lg).</summary>
+    [Parameter] public SbsSize Size { get; set; } = SbsSize.Sm;
+
+    /// <summary>Displays a colored status dot indicator.</summary>
+    [Parameter] public bool Dot { get; set; }
+
+    /// <summary>Applies pill border-radius. Defaults to true.</summary>
+    [Parameter] public bool Pill { get; set; } = true;
+
+    /// <summary>Optional leading icon CSS class.</summary>
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>Optional custom badge content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string NormalizedVariant => Variant switch
+    {
+        SbsVariant.Filled or SbsVariant.Primary => "filled",
+        SbsVariant.Outlined => "outlined",
+        _ => "soft"
+    };
+
+    private bool IsDotOnly => Dot && string.IsNullOrEmpty(Text) && ChildContent is null && string.IsNullOrWhiteSpace(Icon);
+
+    private string RootClass => BuildClass(
+        CreateCssBuilder("sbs-badge")
+            .AddClass($"sbs-badge-{Color.ToCss()}")
+            .AddClass($"sbs-badge-{NormalizedVariant}")
+            .AddClass($"sbs-badge-{Size.ToCss()}")
+            .AddClass("sbs-badge-pill", Pill)
+            .AddClass("sbs-badge-dot-only", IsDotOnly));
+
+    private string? RootStyle => BuildStyle();
+}

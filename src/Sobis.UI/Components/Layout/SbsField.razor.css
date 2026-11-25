@@ -1,0 +1,39 @@
+.sbs-field-top {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 3px;
+}
+
+.sbs-field-top > .sbs-field-label {
+    width: auto;
+    text-align: left;
+}
+
+.sbs-field-has-meta {
+    align-items: flex-start;
+}
+
+.sbs-field-has-meta:not(.sbs-field-top) > .sbs-field-label {
+    padding-top: 6px;
+}
+
+.sbs-field-req {
+    color: var(--sbs-danger);
+    margin-left: 2px;
+    font-weight: 700;
+}
+
+.sbs-field-help {
+    margin-top: 3px;
+    font-size: var(--sbs-fs-xs);
+    line-height: 1.35;
+    color: var(--sbs-text-muted);
+}
+
+.sbs-field-error {
+    margin-top: 3px;
+    font-size: var(--sbs-fs-xs);
+    line-height: 1.35;
+    color: var(--sbs-danger);
+    font-weight: 500;
+}
