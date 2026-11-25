@@ -11,10 +11,10 @@
     <!-- NuGet Package Metadata -->
     <PackageId>Sobis.UI</PackageId>
     <Version>1.0.0</Version>
-    <Authors>Sobis Bilgi Teknolojileri Sistemleri</Authors>
-    <Company>Sobis Bilgi Teknolojileri Sistemleri</Company>
+    <Authors>Sobis Tech Bilişim ve Danışmanlık</Authors>
+    <Company>Sobis Tech Bilişim ve Danışmanlık</Company>
     <Product>Sobis.UI</Product>
-    <Copyright>Copyright (c) 2026 Sobis Bilgi Teknolojileri Sistemleri</Copyright>
+    <Copyright>Copyright (c) 2026 Sobis Tech Bilişim ve Danışmanlık</Copyright>
     <Description>Standalone .NET 10 Blazor UI Component Library with 48 enterprise components: Zero-Div Layout, Form Context, Turkish-Aware Searchable Inputs, Dual-Mode DataGrid, Navigation, Overlays, and Dark/Light CSS Tokens — zero Bootstrap dependency.</Description>
     <PackageProjectUrl>https://www.sobistech.com</PackageProjectUrl>
     <RepositoryUrl>https://github.com/iventhosting/Sobis.UI</RepositoryUrl>
