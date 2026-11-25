@@ -15,7 +15,7 @@
 
 ---
 
-**Sobis.UI**, **Sobis Bilgi Teknolojileri Sistemleri** (`www.sobistech.com`) tarafından geliştirilen bağımsız ve kurumsal bir **.NET 10 Blazor UI Bileşen Kütüphanesi**dir. Veri yoğun kurumsal ekranlar için tasarlanan kütüphane; ham `<div>` kalabalığını ve Bootstrap bağımlılığını ortadan kaldıran, saf `--sbs-*` CSS tasarım token'larıyla çalışan **48 adet tür güvenli Razor bileşeni** sunar.
+**Sobis.UI**, **Sobis Tech Bilişlim ve Danışmanlık** (`www.sobistech.com`) tarafından geliştirilen bağımsız ve kurumsal bir **.NET 10 Blazor UI Bileşen Kütüphanesi**dir. Veri yoğun kurumsal ekranlar için tasarlanan kütüphane; ham `<div>` kalabalığını ve Bootstrap bağımlılığını ortadan kaldıran, saf `--sbs-*` CSS tasarım token'larıyla çalışan **48 adet tür güvenli Razor bileşeni** sunar.
 
 ### ✨ Öne Çıkan Özellikler
 
