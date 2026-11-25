@@ -151,14 +151,6 @@ CSS değişkenleriyle marka renklerini özelleştirme:
 
 Tüm bileşenleri canlı önizleme, kaynak kodu ve API parametre tablolarıyla **[https://www.sobistech.com](https://www.sobistech.com)** adresinden inceleyebilirsiniz.
 
-## 🧪 Derleme & Test
-
-```bash
-dotnet build Sobis.UI.slnx -c Release
-dotnet run --project tests/Sobis.UI.Tests/Sobis.UI.Tests.csproj -c Release
-dotnet pack src/Sobis.UI/Sobis.UI.csproj -c Release -o artifacts/nuget
-```
-
 ## 📄 Lisans
 
-[MIT Lisansı](LICENSE) ile lisanslanmıştır. **Sobis Bilgi Teknolojileri Sistemleri** tarafından geliştirilmiştir.
+[MIT Lisansı](LICENSE) ile lisanslanmıştır. **Sobis Tech Bilişim ve Danışmanlık** tarafından geliştirilmiştir.
